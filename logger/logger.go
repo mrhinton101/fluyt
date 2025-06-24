@@ -2,16 +2,39 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"os"
 )
 
 type LogEntry struct {
-	Level     slog.Level
-	Err       error
-	Component string
+	Level     slog.Level // Log level
+	Err       error      // error object
+	Component string     //
 	Action    string
 	Msg       string
 	Target    string
+}
+
+// Initialize the Logger and open stream to write to file
+func InitLogger(logFileName string) (file *os.File) {
+
+	// Open the file in append mode, create it if it doesn't exist, and allow writing.
+	// 0644 represents the file permissions (read/write for owner, read-only for group and others).
+	file, err := os.OpenFile(logFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("file open fail")
+	}
+
+	// Use a TextHandler or JSONHandler depending on what you prefer.
+	handler := slog.NewJSONHandler(file, &slog.HandlerOptions{
+		Level: slog.LevelDebug, // Adjust this as needed
+	})
+
+	// Set as default logger
+	slog.SetDefault(slog.New(handler))
+
+	return file
 }
 
 // SLogger provides consistent structured logging using slog with context fields.

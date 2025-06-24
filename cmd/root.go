@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 
+	"github.com/mrhinton101/fluyt/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +22,14 @@ var (
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "cli",
+			Action:    "execute",
+			Msg:       "fatal error in CLI",
+			Target:    "self",
+		})
 	}
 }
 func init() {
