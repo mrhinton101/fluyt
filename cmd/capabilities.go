@@ -139,6 +139,7 @@ It allows a client to retrieve information about the gNMI version, supported dat
 				Msg:       fmt.Sprintf("failed to get capabilities on device: %s", addr),
 				Target:    addr,
 			})
+			return err
 		}
 
 		fmt.Println(resp)
