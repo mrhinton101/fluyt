@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mrhinton101/fluyt/cmd"
+	"github.com/mrhinton101/fluyt/cue"
 	"github.com/mrhinton101/fluyt/logger"
 )
 
 func main() {
 	logfile := logger.InitLogger("fluyt.json")
 	defer logfile.Close()
+	cue.CueLoad()
+
 	defer func() {
 		if r := recover(); r != nil {
 
@@ -25,8 +27,6 @@ func main() {
 		}
 	}()
 
-	cmd.Execute()
-
-	panic("test")
+	// cmd.Execute()
 
 }
