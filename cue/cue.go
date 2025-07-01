@@ -1,65 +1,129 @@
 package cue
 
 import (
+	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
+	"cuelang.org/go/cue/load"
 	"cuelang.org/go/encoding/yaml"
+	"github.com/mrhinton101/fluyt/logger"
 )
 
-const cueSource = `
-//ip address definition
-#IPCidr: =~"^((25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})/(3[0-2]|[12]?[0-9])$"
-
-//device entry schema
-#Device: {
-    name: string
-    ip:   #IPCidr
-    telemetry: [...string]
-    tags: {
-    region : string
-    env: string
-    }
-    description?: string
-    config?: [...string]
-    pushmode?: "GNMI" | "Terraform" | "Pulumi"
-}
-//create inventory and add device name to device definition
-#Inventory: {
-    inventory: [k=string]: #Device & { name: k }
-}
-`
-
-func CueLoad() {
+func CueLoadSchemaDir(schema_dir string) (schema_value []cue.Value) {
 	ctx := cuecontext.New()
-	schema := ctx.CompileString(cueSource)
-	inventorySchema := schema.LookupPath(cue.ParsePath("#Inventory"))
+	instances := load.Instances([]string{schema_dir}, nil)
 
-	yamlFile, err := yaml.Extract("inventory.yml", nil)
+	if len(instances) > 1 {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       errors.New("more than 1 schema was loaded"),
+			Component: "Cue",
+			Action:    "load Cue schema directory",
+			Msg: `This function is designed to load a single schema package\n
+			you likely loaded a schema with multiple packages.`,
+			Target: "localhost",
+		})
+	}
+	if instances[0].Err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       instances[0].Err,
+			Component: "Cue",
+			Action:    "load Cue schema directory",
+			Msg:       fmt.Sprintf("error loading schema %s", schema_dir),
+			Target:    "localhost",
+		})
+	}
+
+	schema_value, err := ctx.BuildInstances(instances)
 	if err != nil {
-		log.Fatal(err)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "load Cue schema directory",
+			Msg:       fmt.Sprintf("error loading schema %s", schema_dir),
+			Target:    "localhost",
+		})
+	}
+	logger.SLogger(logger.LogEntry{
+		Level:     slog.LevelDebug,
+		Err:       nil,
+		Component: "Cue",
+		Action:    "load Cue schema directory",
+		Msg:       fmt.Sprintf("successfully loaded %s", schema_dir),
+		Target:    "localhost",
+	})
+	return schema_value
+
+}
+
+func CueLoadInventory(schemaDir string, inv_file string) {
+	ctx := cuecontext.New()
+	// schema := ctx.CompileString(cueSource)
+	// topLevelSchema := schema.LookupPath(cue.ParsePath("#Inventory"))
+
+	// Load schema directory and all files in the package
+	schemaVals := CueLoadSchemaDir(schemaDir)
+	// use the first(and only) schema package. CueLoadSchemaDir already confirms there is a single schema package
+	schema := schemaVals[0]
+
+	// Extract the `#Inventory` definition from schema
+	topLevelKey := "#Inventory"
+	topLevelSchema := schema.LookupPath(cue.ParsePath(topLevelKey))
+	if !topLevelSchema.Exists() {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       errors.New("failed to load top level schema key"),
+			Component: "Cue",
+			Action:    "load Cue top level key",
+			Msg:       fmt.Sprintf("schema missing %s definition", topLevelKey),
+			Target:    "localhost",
+		})
+	}
+
+	// Load YAML inventory file
+	yamlFile, err := yaml.Extract(inv_file, nil)
+	if err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "load yaml file",
+			Msg:       fmt.Sprintf("failed to load %v. Is the location correct", yamlFile),
+			Target:    "localhost",
+		})
 	}
 	yamlVal := ctx.BuildFile(yamlFile)
 
-	unified := inventorySchema.Unify(yamlVal)
+	unified := topLevelSchema.Unify(yamlVal)
 	// Validate unified value
 	if err := unified.Validate(cue.Concrete(true)); err != nil {
-		fmt.Println("YAML: NOT ok")
-		fmt.Println(unified)
-		log.Fatal(err)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "unify schema and inventory",
+			Msg:       "failed to validate unified schema",
+			Target:    "localhost",
+		})
 	}
 
-	fmt.Println("YAML: ok")
-
 	devices := unified.LookupPath(cue.ParsePath("inventory"))
-	// ip := unified.LookupPath(cue.ParsePath("inventory.device1.ip"))
 
-	// fmt.Println(ip)
 	iter, err := devices.Fields()
 	if err != nil {
-		log.Fatal(err)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "load devices fields",
+			Msg:       "failed to iterate over devices fields. are they defined?",
+			Target:    "localhost",
+		})
 	}
 
 	for iter.Next() {
@@ -69,7 +133,14 @@ func CueLoad() {
 		ipVal := deviceVal.LookupPath(cue.ParsePath("ip"))
 		ipStr, err := ipVal.String()
 		if err != nil {
-			log.Fatalf("Could not get IP for device %s: %v", deviceName, err)
+			logger.SLogger(logger.LogEntry{
+				Level:     slog.LevelError,
+				Err:       err,
+				Component: "Cue",
+				Action:    "find ip",
+				Msg:       fmt.Sprintf("Could not get IP for device %s: %v", deviceName, err),
+				Target:    "localhost",
+			})
 		}
 
 		fmt.Printf("Connecting to device %s at IP %s\n", deviceName, ipStr)

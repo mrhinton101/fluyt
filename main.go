@@ -11,7 +11,7 @@ import (
 func main() {
 	logfile := logger.InitLogger("fluyt.json")
 	defer logfile.Close()
-	cue.CueLoad()
+	cue.CueLoadInventory("./schema", "./inventory.yml")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -26,7 +26,7 @@ func main() {
 			})
 		}
 	}()
-
+	// cue.CueLoadSchemaDir("./schema")
 	// cmd.Execute()
 
 }
