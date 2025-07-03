@@ -132,6 +132,35 @@ func CueLoadInventory(schemaDir string, inv_file string) {
 
 		ipVal := deviceVal.LookupPath(cue.ParsePath("ip"))
 		ipStr, err := ipVal.String()
+		telemetryPaths := deviceVal.LookupPath(cue.ParsePath("telemetry"))
+		if !telemetryPaths.Exists() {
+			logger.SLogger(logger.LogEntry{
+				Level:     slog.LevelError,
+				Err:       errors.New("no telemetry paths defined"),
+				Component: "Cue",
+				Action:    "get telemetry paths",
+				Msg:       fmt.Sprintf("Could not get telemetry paths for device %s: %v", deviceName, err),
+				Target:    "localhost",
+			})
+		}
+		iter, err := telemetryPaths.List()
+		for iter.Next() {
+
+			telemetryVal := iter.Value()
+			telemetryStr, err := telemetryVal.String()
+			if err != nil {
+				logger.SLogger(logger.LogEntry{
+					Level:     slog.LevelError,
+					Err:       err,
+					Component: "Cue",
+					Action:    "get telemetry value",
+					Msg:       fmt.Sprintf("Could not get telemetry value for device %s: %v", deviceName, err),
+					Target:    "localhost",
+				})
+			}
+			fmt.Printf("Device %s has telemetry %s\n", deviceName, telemetryStr)
+		}
+
 		if err != nil {
 			logger.SLogger(logger.LogEntry{
 				Level:     slog.LevelError,
