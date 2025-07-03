@@ -1,6 +1,6 @@
 package fluyt
 
-#telemetry_paths: {
+#: {
   [name=string]: #gnmi_path_meta
 }
 

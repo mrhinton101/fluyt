@@ -12,8 +12,8 @@ import (
 	"github.com/mrhinton101/fluyt/logger"
 )
 
-func CueLoadSchemaDir(schema_dir string) (schema_value []cue.Value) {
-	ctx := cuecontext.New()
+func CueLoadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Value) {
+	ctx = cuecontext.New()
 	instances := load.Instances([]string{schema_dir}, nil)
 
 	if len(instances) > 1 {
@@ -38,7 +38,7 @@ func CueLoadSchemaDir(schema_dir string) (schema_value []cue.Value) {
 		})
 	}
 
-	schema_value, err := ctx.BuildInstances(instances)
+	schemaVals, err := ctx.BuildInstances(instances)
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
@@ -57,36 +57,31 @@ func CueLoadSchemaDir(schema_dir string) (schema_value []cue.Value) {
 		Msg:       fmt.Sprintf("successfully loaded %s", schema_dir),
 		Target:    "localhost",
 	})
-	return schema_value
-
+	// Leave schema value as a slice of Values for flexibility and remain idiomatic with Cue.
+	// calling functions will still need to gather first entry
+	return ctx, schemaVals
 }
 
-func CueLoadInventory(schemaDir string, inv_file string) {
-	ctx := cuecontext.New()
-	// schema := ctx.CompileString(cueSource)
-	// topLevelSchema := schema.LookupPath(cue.ParsePath("#Inventory"))
-
-	// Load schema directory and all files in the package
-	schemaVals := CueLoadSchemaDir(schemaDir)
-	// use the first(and only) schema package. CueLoadSchemaDir already confirms there is a single schema package
-	schema := schemaVals[0]
-
+func cuePathLookup(path string, schema cue.Value) (pathResults cue.Value) {
 	// Extract the `#Inventory` definition from schema
-	topLevelKey := "#Inventory"
-	topLevelSchema := schema.LookupPath(cue.ParsePath(topLevelKey))
-	if !topLevelSchema.Exists() {
+	pathResults = schema.LookupPath(cue.ParsePath(path))
+	if !pathResults.Exists() {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
 			Err:       errors.New("failed to load top level schema key"),
 			Component: "Cue",
 			Action:    "load Cue top level key",
-			Msg:       fmt.Sprintf("schema missing %s definition", topLevelKey),
+			Msg:       fmt.Sprintf("schema missing %s definition", path),
 			Target:    "localhost",
 		})
 	}
+	return pathResults
 
+}
+
+func cueLoadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
 	// Load YAML inventory file
-	yamlFile, err := yaml.Extract(inv_file, nil)
+	yamlFile, err := yaml.Extract(yamlfile, nil)
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
@@ -97,11 +92,52 @@ func CueLoadInventory(schemaDir string, inv_file string) {
 			Target:    "localhost",
 		})
 	}
-	yamlVal := ctx.BuildFile(yamlFile)
+	yamlVal = ctx.BuildFile(yamlFile)
+	return yamlVal
 
-	unified := topLevelSchema.Unify(yamlVal)
-	// Validate unified value
-	if err := unified.Validate(cue.Concrete(true)); err != nil {
+}
+
+func CueLoadTelPaths(ctx *cue.Context, schemaVals []cue.Value) {
+	schema := schemaVals[0]
+
+	telSchemaVal := cuePathLookup("#telemetry_paths", schema)
+
+	fmt.Println(telSchemaVal)
+	// iter, err := telSchemaVal.Fields()
+
+	// for iter.Next() {
+	// 	telemetryVal := iter.Value()
+	// 	telemetryStr, err := telemetryVal.String()
+	// 	if err != nil {
+	// 		logger.SLogger(logger.LogEntry{
+	// 			Level:     slog.LevelError,
+	// 			Err:       err,
+	// 			Component: "Cue",
+	// 			Action:    "get telemetry value",
+	// 			Msg:       fmt.Sprintf("Could not get telemetry value for device %v", err),
+	// 			Target:    "localhost",
+	// 		})
+	// 	}
+	// 	fmt.Printf("Device %s has telemetry %s\n",  telemetryStr)
+	// }
+
+}
+
+func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal cue.Value) {
+	// Load schema directory and all files in the package
+
+	// use the first(and only) schema package. CueLoadSchemaDir already confirms there is a single schema package
+	schema := schemaVals[0]
+
+	invSchema := cuePathLookup("#inventory", schema)
+
+	invVal := cueLoadYaml(ctx, invFile)
+
+	unifiedVal := invSchema.Unify(invVal)
+	// fmt.Println("Unified CUE value:")
+	// fmt.Println(unifiedVal)
+	// Validate unified value. all values must be defined
+	if err := unifiedVal.Validate(cue.Concrete(true)); err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
 			Err:       err,
@@ -111,10 +147,12 @@ func CueLoadInventory(schemaDir string, inv_file string) {
 			Target:    "localhost",
 		})
 	}
+	concreteInvVal = unifiedVal.LookupPath(cue.ParsePath("inventory"))
+	return concreteInvVal
+}
 
-	devices := unified.LookupPath(cue.ParsePath("inventory"))
-
-	iter, err := devices.Fields()
+func CueMatchTags(concreteInvVal cue.Value) {
+	iter, err := concreteInvVal.Fields()
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,

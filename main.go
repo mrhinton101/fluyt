@@ -11,8 +11,12 @@ import (
 func main() {
 	logfile := logger.InitLogger("fluyt.json")
 	defer logfile.Close()
-	cue.CueLoadInventory("./schema", "./inventory.yml")
+	schemaDir := "./schema/"
+	ctx, schemaVals := cue.CueLoadSchemaDir(schemaDir)
 
+	concreteInvVal := cue.CueLoadInventory(ctx, schemaVals, "./inventory.yml")
+	cue.CueLoadTelPaths(ctx, schemaVals)
+	cue.CueMatchTags(concreteInvVal)
 	defer func() {
 		if r := recover(); r != nil {
 
@@ -26,7 +30,6 @@ func main() {
 			})
 		}
 	}()
-	// cue.CueLoadSchemaDir("./schema")
 	// cmd.Execute()
 
 }
