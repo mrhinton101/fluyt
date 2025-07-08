@@ -1,26 +1,39 @@
 package fluyt
 
-import list
-import string
+import "list"
+import "strings"
+import "net"
 
-#ipcidr: =~"^((25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})/(3[0-2]|[12]?[0-9])$"
+
 
 //device entry schema
 #device: {
     name: string
-    ip:   #ipcidr
-    telemetry: [...string]
+    ip:   net.IPCIDR
+    telemetry: [...string] 
     tags: {
-    region : string
-    env: string
+    "region" : string
+    "env": string 
     }
     description?: string
     config?: [...string]
-    pushmode?: "GNMI" | "Terraform" | "Pulumi"
+    pushmode?: "GNMI" | "Terraform" | "Pulumi" 
     tel_paths: [for x, y in #telemetry_paths 
+    let tel_name = x
     if list.Contains(telemetry, x) 
-        {y.path} ]
+    let tel_path = strings.Join(y.path, "/")
+    { "\(tel_name)" : tel_path} ]
+    
+  _invalid_telemetry: [for x, y in telemetry 
+    let tel_name = y
+    if !list.Contains(supported_paths, y) 
+    {tel_name} ]
 
+      if len(_invalid_telemetry) > 0 {   
+    invalid_telemetry: _invalid_telemetry & error("unsupported telemetry paths for \(name): \(strings.Join(_invalid_telemetry, ", "))")
+      
+}
+    
 }
 //create inventory and add device name to device definition
 #inventory: {

@@ -1,5 +1,7 @@
-import "list"
-
+import ("list"
+"strings"
+"net"
+)
 
 #telemetry_paths: {
     aft : #aft
@@ -38,12 +40,11 @@ import "list"
 }
 
 //ip address definition
-#IPCidr: =~"^((25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})\\.){3}(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})/(3[0-2]|[12]?[0-9])$"
 
 //device entry schema
-#Device: {
+#device: {
     name: string
-    ip:   #IPCidr
+    ip:   net.IPCIDR
     telemetry: [...string]
     tags: {
     "region" : string
@@ -52,15 +53,20 @@ import "list"
     description?: string
     config?: [...string]
     pushmode?: "GNMI" | "Terraform" | "Pulumi" 
-    tel_paths: [for x, y in #telemetry_paths if list.Contains(telemetry, x) {y.path} ]
+    tel_paths: [for x, y in #telemetry_paths 
+    let tel_name = x
+    
+    if list.Contains(telemetry, x) 
+    let tel_path = strings.Join(y.path, "/")
+    { "\(tel_name)" : tel_path} ]
 }
 
 
-#Inventory: {
-    inventory: [k=string]: #Device & { name: k }
+#inventory: {
+    inventory: [k=string]: #device & { name: k }
 }
 
-#Inventory & {
+#inventory & {
 inventory:{
   device1:{
     ip: "10.1.1.1/22"
@@ -74,7 +80,7 @@ inventory:{
     tags:{
       "region": "amer"
       "env": "lab"}
-    telemetry:[ "aft", "fo"]
+    telemetry:["fo"]
       }
 }
 }

@@ -15,8 +15,8 @@ func main() {
 	ctx, schemaVals := cue.CueLoadSchemaDir(schemaDir)
 
 	concreteInvVal := cue.CueLoadInventory(ctx, schemaVals, "./inventory.yml")
-	cue.CueLoadTelPaths(ctx, schemaVals)
-	cue.CueMatchTags(concreteInvVal)
+	// cue.CueLoadTelPaths(ctx, schemaVals)
+	cue.CueGrabSubs(concreteInvVal)
 	defer func() {
 		if r := recover(); r != nil {
 

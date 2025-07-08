@@ -10,7 +10,11 @@ package fluyt
     rpc: {
         "get": true
         "set": false
-        "subscribe": true
+        "subscribe": {
+            "supported": true
+            "mode": "on_change"
+            "interval": null
+    }
     }
     provider: "openconfig"
     tags: ["aft"]

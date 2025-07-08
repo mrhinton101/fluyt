@@ -29,7 +29,7 @@ func InitLogger(logFileName string) (file *os.File) {
 	multiWriter := io.MultiWriter(os.Stdout, file)
 	// Use a TextHandler or JSONHandler depending on what you prefer.
 	handler := slog.NewJSONHandler(multiWriter, &slog.HandlerOptions{
-		Level: slog.LevelError, // Adjust this as needed
+		Level: slog.LevelWarn, // Adjust this as needed
 	})
 
 	// Set as default logger

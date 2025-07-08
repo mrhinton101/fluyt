@@ -1,15 +1,24 @@
 package fluyt
 
+
 #telemetry_paths: {
   [name=string]: #gnmi_path_meta
 }
 
+#supported_paths: [for k, v in #telemetry_paths {k}]  
+
 #gnmi_path_meta: {
     path: [...string]                 // gNMI path segments
     description: string              // what the path captures
-    rpc: {  "get" : bool
-            "set": bool
-            "subscribe": bool}        // whether it's Get-only or supports Set
+    rpc: {
+        "get": true
+        "set": false
+        "subscribe": {
+            "supported": true
+            "mode": "on_change"
+            "interval": null
+        }
+    }
     provider: string                 // "openconfig", "vendor-x", etc.
     tags?: [...string]               // optional tags like "interface", "bgp", etc.
     type?: "string" | "int" | "bool" | "float" | "bytes"

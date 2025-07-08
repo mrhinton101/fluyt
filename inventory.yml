@@ -6,7 +6,7 @@ inventory:
       env: lab
     telemetry:
       - aft
-      - fu
+      - aft
   device2:
     ip: "10.1.1.2/22"
     tags:
@@ -14,4 +14,3 @@ inventory:
       env: lab
     telemetry:
       - aft
-      - test2

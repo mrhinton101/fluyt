@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -11,6 +12,64 @@ import (
 	"cuelang.org/go/encoding/yaml"
 	"github.com/mrhinton101/fluyt/logger"
 )
+
+type DeviceSubsList struct {
+	Devices     []DeviceSubPaths
+	dedupTarget map[string]struct{}
+}
+
+type DeviceSubPaths struct {
+	Target string
+	Paths  []string
+}
+
+func InitDeviceSubsList() *DeviceSubsList {
+	return &DeviceSubsList{
+		Devices:     []DeviceSubPaths{},
+		dedupTarget: make(map[string]struct{}),
+	}
+}
+
+func dedupList(inputSlice []string) (outputSlice []string) {
+	outputSlice = []string{}
+	// dupeEntries := []string{}
+	for _, item := range inputSlice {
+		if !slices.Contains(outputSlice, item) {
+			outputSlice = append(outputSlice, item)
+		} else {
+			logger.SLogger(logger.LogEntry{
+				Level:     slog.LevelError,
+				Err:       errors.New("duplicate entry found"),
+				Component: "Cue",
+				Action:    "dedup list",
+				Msg:       fmt.Sprintf("duplicate entry %s found in list", item),
+				Target:    item,
+			},
+			)
+		}
+
+	}
+	return outputSlice
+}
+
+func (d *DeviceSubsList) Add(sub DeviceSubPaths) {
+
+	if _, dupe := d.dedupTarget[sub.Target]; dupe {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       errors.New("duplicate target found"),
+			Component: "Cue",
+			Action:    "add device subscription",
+			Msg:       fmt.Sprintf("target %s already exists in the list", sub.Target),
+			Target:    sub.Target,
+		})
+		return
+	}
+	d.dedupTarget[sub.Target] = struct{}{}
+	cleanPathList := dedupList(sub.Paths)
+	sub.Paths = cleanPathList
+	d.Devices = append(d.Devices, sub)
+}
 
 func CueLoadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Value) {
 	ctx = cuecontext.New()
@@ -33,7 +92,7 @@ func CueLoadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Val
 			Err:       instances[0].Err,
 			Component: "Cue",
 			Action:    "load Cue schema directory",
-			Msg:       fmt.Sprintf("error loading schema %s", schema_dir),
+			Msg:       fmt.Sprintf("error loading schema %s. Check your schema syntax", schema_dir),
 			Target:    "localhost",
 		})
 	}
@@ -97,31 +156,31 @@ func cueLoadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
 
 }
 
-func CueLoadTelPaths(ctx *cue.Context, schemaVals []cue.Value) {
-	schema := schemaVals[0]
+// func CueLoadTelPaths(ctx *cue.Context, schemaVals []cue.Value) {
+// 	schema := schemaVals[0]
 
-	telSchemaVal := cuePathLookup("#telemetry_paths", schema)
+// 	telSchemaVal := cuePathLookup("#telemetry_paths", schema)
 
-	fmt.Println(telSchemaVal)
-	// iter, err := telSchemaVal.Fields()
+// fmt.Println(telSchemaVal)
+// iter, err := telSchemaVal.Fields()
 
-	// for iter.Next() {
-	// 	telemetryVal := iter.Value()
-	// 	telemetryStr, err := telemetryVal.String()
-	// 	if err != nil {
-	// 		logger.SLogger(logger.LogEntry{
-	// 			Level:     slog.LevelError,
-	// 			Err:       err,
-	// 			Component: "Cue",
-	// 			Action:    "get telemetry value",
-	// 			Msg:       fmt.Sprintf("Could not get telemetry value for device %v", err),
-	// 			Target:    "localhost",
-	// 		})
-	// 	}
-	// 	fmt.Printf("Device %s has telemetry %s\n",  telemetryStr)
-	// }
+// for iter.Next() {
+// 	telemetryVal := iter.Value()
+// 	telemetryStr, err := telemetryVal.String()
+// 	if err != nil {
+// 		logger.SLogger(logger.LogEntry{
+// 			Level:     slog.LevelError,
+// 			Err:       err,
+// 			Component: "Cue",
+// 			Action:    "get telemetry value",
+// 			Msg:       fmt.Sprintf("Could not get telemetry value for device %v", err),
+// 			Target:    "localhost",
+// 		})
+// 	}
+// 	fmt.Printf("Device %s has telemetry %s\n",  telemetryStr)
+// }
 
-}
+// }
 
 func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal cue.Value) {
 	// Load schema directory and all files in the package
@@ -143,7 +202,7 @@ func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) 
 			Err:       err,
 			Component: "Cue",
 			Action:    "unify schema and inventory",
-			Msg:       "failed to validate unified schema",
+			Msg:       "error validating unified schema",
 			Target:    "localhost",
 		})
 	}
@@ -151,8 +210,8 @@ func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) 
 	return concreteInvVal
 }
 
-func CueMatchTags(concreteInvVal cue.Value) {
-	iter, err := concreteInvVal.Fields()
+func CueGrabSubs(concreteInvVal cue.Value) {
+	iter_inventory, err := concreteInvVal.Fields()
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
@@ -163,14 +222,14 @@ func CueMatchTags(concreteInvVal cue.Value) {
 			Target:    "localhost",
 		})
 	}
-
-	for iter.Next() {
-		deviceName := iter.Selector()
-		deviceVal := iter.Value()
+	DeviceSubsList := InitDeviceSubsList()
+	for iter_inventory.Next() {
+		deviceName := iter_inventory.Selector()
+		deviceVal := iter_inventory.Value()
 
 		ipVal := deviceVal.LookupPath(cue.ParsePath("ip"))
 		ipStr, err := ipVal.String()
-		telemetryPaths := deviceVal.LookupPath(cue.ParsePath("telemetry"))
+		telemetryPaths := deviceVal.LookupPath(cue.ParsePath("tel_paths"))
 		if !telemetryPaths.Exists() {
 			logger.SLogger(logger.LogEntry{
 				Level:     slog.LevelError,
@@ -181,22 +240,50 @@ func CueMatchTags(concreteInvVal cue.Value) {
 				Target:    "localhost",
 			})
 		}
-		iter, err := telemetryPaths.List()
-		for iter.Next() {
+		iter_telemetry, err := telemetryPaths.List()
+		telemPathList := []string{}
+		for iter_telemetry.Next() {
 
-			telemetryVal := iter.Value()
-			telemetryStr, err := telemetryVal.String()
+			telemetryVal := iter_telemetry.Value()
+
+			iter_telemetry_paths, err := telemetryVal.Fields()
 			if err != nil {
 				logger.SLogger(logger.LogEntry{
 					Level:     slog.LevelError,
 					Err:       err,
 					Component: "Cue",
-					Action:    "get telemetry value",
-					Msg:       fmt.Sprintf("Could not get telemetry value for device %s: %v", deviceName, err),
+					Action:    "get telemetry paths",
+					Msg:       fmt.Sprintf("Could not get telemetry paths for device %s: %v", deviceName, err),
 					Target:    "localhost",
 				})
 			}
-			fmt.Printf("Device %s has telemetry %s\n", deviceName, telemetryStr)
+			for iter_telemetry_paths.Next() {
+				telemetryPathVal := iter_telemetry_paths.Value()
+				telemetryPathStr, err := telemetryPathVal.String()
+				if err != nil {
+					logger.SLogger(logger.LogEntry{
+						Level:     slog.LevelError,
+						Err:       err,
+						Component: "Cue",
+						Action:    "convert telemetry value to string",
+						Msg:       fmt.Sprintf("Could not convert telemetry value to string for device %s: %v", deviceName, err),
+						Target:    "localhost",
+					})
+
+				}
+				telemPathList = append(telemPathList, telemetryPathStr)
+				if err != nil {
+					logger.SLogger(logger.LogEntry{
+						Level:     slog.LevelError,
+						Err:       err,
+						Component: "Cue",
+						Action:    "get telemetry value",
+						Msg:       fmt.Sprintf("Could not get telemetry value for device %s: %v", deviceName, err),
+						Target:    "localhost",
+					})
+				}
+			}
+
 		}
 
 		if err != nil {
@@ -209,8 +296,13 @@ func CueMatchTags(concreteInvVal cue.Value) {
 				Target:    "localhost",
 			})
 		}
-
-		fmt.Printf("Connecting to device %s at IP %s\n", deviceName, ipStr)
+		device := DeviceSubPaths{
+			Target: ipStr,
+			Paths:  telemPathList,
+		}
+		DeviceSubsList.Add(device)
+		// fmt.Printf("Connecting to device %s at IP %s\n", deviceName, ipStr)
 
 	}
+	fmt.Println(DeviceSubsList.Devices)
 }
