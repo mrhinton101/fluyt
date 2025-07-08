@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/mrhinton101/fluyt/cmd"
 	"github.com/mrhinton101/fluyt/cue"
 	"github.com/mrhinton101/fluyt/logger"
 )
@@ -30,6 +31,6 @@ func main() {
 			})
 		}
 	}()
-	// cmd.Execute()
+	cmd.Execute()
 
 }
