@@ -26,7 +26,7 @@ import "net"
     
   _invalid_telemetry: [for x, y in telemetry 
     let tel_name = y
-    if !list.Contains(supported_paths, y) 
+    if !list.Contains(#supported_paths, y) 
     {tel_name} ]
 
       if len(_invalid_telemetry) > 0 {   
