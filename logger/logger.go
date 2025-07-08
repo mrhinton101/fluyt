@@ -3,6 +3,7 @@ package logger
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 )
@@ -25,10 +26,10 @@ func InitLogger(logFileName string) (file *os.File) {
 	if err != nil {
 		fmt.Println("file open fail")
 	}
-
+	multiWriter := io.MultiWriter(os.Stdout, file)
 	// Use a TextHandler or JSONHandler depending on what you prefer.
-	handler := slog.NewJSONHandler(file, &slog.HandlerOptions{
-		Level: slog.LevelDebug, // Adjust this as needed
+	handler := slog.NewJSONHandler(multiWriter, &slog.HandlerOptions{
+		Level: slog.LevelWarn, // Adjust this as needed
 	})
 
 	// Set as default logger
