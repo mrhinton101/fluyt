@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/mrhinton101/fluyt/gnmiClient"
 	"github.com/mrhinton101/fluyt/logger"
@@ -24,19 +23,6 @@ It allows a client to retrieve information about the gNMI version, supported dat
 			Msg:       "user selected capabilities",
 			Target:    "localhost",
 		})
-
-		if addr == "" {
-			err := errors.New("missing required flag or env var: addr")
-			logger.SLogger(logger.LogEntry{
-				Level:     slog.LevelError,
-				Err:       err,
-				Component: "cli command",
-				Action:    "get address var",
-				Msg:       "failed to find required flag",
-				Target:    "localhost",
-			})
-			return err
-		}
 
 		if username == "" {
 			err := errors.New("missing required flag or env var: username")
@@ -64,50 +50,20 @@ It allows a client to retrieve information about the gNMI version, supported dat
 			return err
 		}
 
-		logger.SLogger(logger.LogEntry{
-			Level:     slog.LevelDebug,
-			Component: "gnmi client",
-			Action:    "launch GNMI Client",
-			Msg:       fmt.Sprintf("Successfully authenticated. Launching GNMI client for %s on %s", username, addr),
-			Target:    addr,
-		})
+		fmt.Println(CueInputs)
+		creds := gnmiClient.Credentials{
+			Username: username,
+			Password: password}
 
-		client, err := gnmiClient.NewGNMIClient(addr, 3*time.Second, username, password)
-		if err != nil {
-			logger.SLogger(logger.LogEntry{
-				Level:     slog.LevelError,
-				Err:       err,
-				Component: "authentication",
-				Action:    "launch GNMI Client",
-				Msg:       fmt.Sprintf("Authentication failed for user: %s on device: %s", username, addr),
-				Target:    addr,
-			})
-			return err
-		}
-		defer client.Conn.Close()
+		for _, target := range CueInputs.Devices {
+			fmt.Println("capabilities")
+			resp := gnmiClient.Capabilities(target, creds)
+			// fmt.Println(resp)
+			fmt.Printf("data = %s", resp)
 
-		logger.SLogger(logger.LogEntry{
-			Level:     slog.LevelInfo,
-			Component: "gnmi client",
-			Action:    "launch GNMI Client",
-			Msg:       fmt.Sprintf("successfully launched GNMI Client for user: %s on device: %s", username, addr),
-			Target:    addr,
-		})
-
-		resp, err := client.Capabilities()
-		if err != nil {
-			logger.SLogger(logger.LogEntry{
-				Level:     slog.LevelError,
-				Err:       err,
-				Component: "gnmi client",
-				Action:    "get capabilities",
-				Msg:       fmt.Sprintf("failed to get capabilities on device: %s", addr),
-				Target:    addr,
-			})
-			return err
 		}
 
-		fmt.Println(resp)
+		// fmt.Println(resp)
 		return nil
 	},
 }

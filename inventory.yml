@@ -1,16 +1,23 @@
 inventory:
   device1:
-    ip: "10.1.1.1/22"
+    ip: "192.168.121.101"
     tags:
       region: amer
       env: lab
     telemetry:
       - aft
-      - aft
-  device2:
-    ip: "10.1.1.2/22"
-    tags:
-      region: amer
-      env: lab
-    telemetry:
-      - aft
+      - aft2
+
+
+      ether1:
+      description: "Ethernet 1"
+      enabled: true
+      mtu: 1500
+      
+  # device2:
+  #   ip: "10.1.1.2/22"
+  #   tags:
+  #     region: amer
+  #     env: lab
+  #   telemetry:
+  #     - aft

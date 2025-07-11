@@ -4,101 +4,78 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
-	"time"
 
 	"github.com/mrhinton101/fluyt/cue"
 	"github.com/mrhinton101/fluyt/logger"
-	"github.com/openconfig/gnmi/cache"
-	"github.com/openconfig/gnmi/client"
-	_ "github.com/openconfig/gnmi/client/gnmi"
-	pb "github.com/openconfig/gnmi/proto/gnmi"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
+	"github.com/openconfig/gnmic/pkg/api"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
-type GNMIClient struct {
-	Conn     *grpc.ClientConn
-	GNMI     pb.GNMIClient
-	Target   string
-	Timeout  time.Duration
+type Credentials struct {
 	Username string
 	Password string
 }
 
-func NewGNMIClient(target string, timeout time.Duration, username string, password string) (*GNMIClient, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure())
-	if err != nil {
-		// errLogger(err, "create-grpc-conn", "create grpc DialContext", "failed to create grpc connection", "local")
-		os.Exit(1)
-	}
-	slog.Info("successfully created grpc connection")
-
-	return &GNMIClient{
-		Conn:     conn,
-		GNMI:     pb.NewGNMIClient(conn),
-		Target:   target,
-		Timeout:  timeout,
-		Username: username,
-		Password: password,
-	}, nil
-}
-
-func (c *GNMIClient) Capabilities() (*pb.CapabilityResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	md := metadata.Pairs(
-		"username", c.Username,
-		"password", c.Password,
+func Capabilities(gnmiTarget cue.DeviceSubPaths, creds Credentials) (response []byte) {
+	// create a target
+	tg, err := api.NewTarget(
+		api.Name(gnmiTarget.Name),
+		api.Address(fmt.Sprintf("%s:6030", gnmiTarget.Address)),
+		api.Username(creds.Username),
+		api.Password(creds.Password),
+		api.Insecure(true),
+		api.SkipVerify(true),
 	)
-	ctx = metadata.NewOutgoingContext(ctx, md)
-
-	req := &pb.CapabilityRequest{}
-	resp, err := c.GNMI.Capabilities(ctx, req)
-	if err == nil {
-		slog.Info("capabilities retrieved", "target", c.Target)
-	}
-	return resp, err
-}
-
-func (c *GNMIClient) Subscribe(DeviceSubsList cue.DeviceSubsList, timeoutWithUnit string) (err error) {
-
-	timeout, err := time.ParseDuration(timeoutWithUnit)
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
-			Component: "gnmi client",
-			Action:    "parse subscribe duration",
-			Msg:       fmt.Sprintf("unable to parse timeout duration: %s", timeoutWithUnit),
 			Err:       err,
-			Target:    "localhost",
+			Component: "gnmiClient",
+			Action:    "create target",
+			Msg:       "failed to create gNMI target",
+			Target:    gnmiTarget.Name,
 		})
 	}
-	if timeout <= 0 {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// create a gNMI client
+	err = tg.CreateGNMIClient(ctx)
+	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
-			Component: "gnmi client",
-			Action:    "validate subscribe duration",
-			Msg:       fmt.Sprintf("invalid timeout duration: %s", timeoutWithUnit),
-			Target:    "localhost",
+			Err:       err,
+			Component: "gnmiClient",
+			Action:    "create gNMI client",
+			Msg:       "failed to create gNMI client",
+			Target:    gnmiTarget.Name,
 		})
-		return fmt.Errorf("invalid timeout duration: %s", timeoutWithUnit)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	subCache := cache.New(nil)
-	for _, DeviceSubPaths := range DeviceSubsList.Devices {
+	defer tg.Close()
 
-		query := client.Query{
-			Addrs:  []string{DeviceSubPaths.Target},
-			Credentials: &client.Credentials{
-				Username: c.Username,
-				Password: c.Password,
-			},
+	// send a gNMI capabilities request to the created target
+	capResp, err := tg.Capabilities(ctx)
+	if err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "gnmiClient",
+			Action:    "get capabilities",
+			Msg:       "failed to get gNMI capabilities",
+			Target:    gnmiTarget.Name,
+		})
 	}
-	return err
+	response, err = prototext.Marshal(capResp)
+	if err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "gnmiClient",
+			Action:    "marshal capabilities response",
+			Msg:       "failed to marshal gNMI capabilities response",
+			Target:    gnmiTarget.Name,
+		})
+	}
+	return response
 }
