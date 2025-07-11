@@ -12,7 +12,9 @@ require (
 )
 
 require (
+	bitbucket.org/creachadair/stringset v0.0.14 // indirect
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20250530080122-d0efc28a5723 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/emicklei/proto v1.14.1 // indirect
 	github.com/golang/glog v1.2.4 // indirect
@@ -21,6 +23,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
+	github.com/openconfig/grpctunnel v0.1.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
