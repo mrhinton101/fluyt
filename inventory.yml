@@ -7,13 +7,6 @@ inventory:
     telemetry:
       - aft
       - aft2
-
-
-      ether1:
-      description: "Ethernet 1"
-      enabled: true
-      mtu: 1500
-      
   # device2:
   #   ip: "10.1.1.2/22"
   #   tags:
