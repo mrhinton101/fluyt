@@ -7,7 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/mrhinton101/fluyt/cue"
 	"github.com/mrhinton101/fluyt/logger"
+	"github.com/openconfig/gnmi/cache"
+	"github.com/openconfig/gnmi/client"
+	_ "github.com/openconfig/gnmi/client/gnmi"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -61,7 +65,8 @@ func (c *GNMIClient) Capabilities() (*pb.CapabilityResponse, error) {
 	return resp, err
 }
 
-func (c *GNMIClient) Subscribe(query string, timeoutWithUnit string) error {
+func (c *GNMIClient) Subscribe(DeviceSubsList cue.DeviceSubsList, timeoutWithUnit string) (err error) {
+
 	timeout, err := time.ParseDuration(timeoutWithUnit)
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
@@ -85,17 +90,15 @@ func (c *GNMIClient) Subscribe(query string, timeoutWithUnit string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	subCache := cache.New(nil)
+	for _, DeviceSubPaths := range DeviceSubsList.Devices {
 
-	md := metadata.Pairs(
-		"username", c.Username,
-		"password", c.Password,
-	)
-	ctx = metadata.NewOutgoingContext(ctx, md)
-
-	req := &pb.CapabilityRequest{}
-	resp, err := c.GNMI.Capabilities(ctx, req)
-	if err == nil {
-		slog.Info("capabilities retrieved", "target", c.Target)
+		query := client.Query{
+			Addrs:  []string{DeviceSubPaths.Target},
+			Credentials: &client.Credentials{
+				Username: c.Username,
+				Password: c.Password,
+			},
 	}
-	return resp, err
+	return err
 }
