@@ -9,7 +9,7 @@ import "net"
 //device entry schema
 #device: {
     name: string
-    ip:   net.IPCIDR
+    ip:   net.IP
     telemetry: [...string] 
     tags: {
     "region" : string

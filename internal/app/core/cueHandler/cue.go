@@ -9,7 +9,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/encoding/yaml"
-	"github.com/mrhinton101/fluyt/logger"
+	logger "github.com/mrhinton101/fluyt/internal/app/core"
 )
 
 type DeviceSubsList struct {

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mrhinton101/fluyt/cmd"
-	"github.com/mrhinton101/fluyt/cue"
-	"github.com/mrhinton101/fluyt/logger"
+	cmd "github.com/mrhinton101/fluyt/cmd/fluyt/commands"
+	logger "github.com/mrhinton101/fluyt/internal/app/core"
+	cue "github.com/mrhinton101/fluyt/internal/app/core/cueHandler"
 )
 
 func main() {
 	logfile := logger.InitLogger("fluytLogs.json")
 	defer logfile.Close()
-	schemaDir := "./schema/"
+	schemaDir := "../../schema/"
 	ctx, schemaVals := cue.CueLoadSchemaDir(schemaDir)
 
 	concreteInvVal := cue.CueLoadInventory(ctx, schemaVals, "./inventory.yml")

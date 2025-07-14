@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/mrhinton101/fluyt/cue"
-	"github.com/mrhinton101/fluyt/logger"
+	logger "github.com/mrhinton101/fluyt/internal/app/core"
+	cue "github.com/mrhinton101/fluyt/internal/app/core/cueHandler"
 	"github.com/spf13/cobra"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mrhinton101/fluyt/cue"
-	"github.com/mrhinton101/fluyt/logger"
+	logger "github.com/mrhinton101/fluyt/internal/app/core"
+	cue "github.com/mrhinton101/fluyt/internal/app/core/cueHandler"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/gnmic/pkg/api"
 )

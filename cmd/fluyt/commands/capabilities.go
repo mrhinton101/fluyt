@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/mrhinton101/fluyt/gnmiClient"
-	"github.com/mrhinton101/fluyt/logger"
+	gnmiClient "github.com/mrhinton101/fluyt/internal/adapter"
+	logger "github.com/mrhinton101/fluyt/internal/app/core"
 	"github.com/spf13/cobra"
 )
 
