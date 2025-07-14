@@ -17,7 +17,7 @@ func main() {
 
 	concreteInvVal := cue.CueLoadInventory(ctx, schemaVals, "./inventory.yml")
 	// cue.CueLoadTelPaths(ctx, schemaVals)
-	cue.CueGrabSubs(concreteInvVal)
+	CueInputs := cue.CueGrabSubs(concreteInvVal)
 	defer func() {
 		if r := recover(); r != nil {
 
@@ -31,6 +31,7 @@ func main() {
 			})
 		}
 	}()
+	cmd.SetCueInputs(CueInputs)
 	cmd.Execute()
 
 }

@@ -19,8 +19,10 @@ type DeviceSubsList struct {
 }
 
 type DeviceSubPaths struct {
-	Target string
-	Paths  []string
+	Name    string
+	Address string
+	Port    string
+	Paths   []string
 }
 
 func InitDeviceSubsList() *DeviceSubsList {
@@ -54,18 +56,18 @@ func dedupList(inputSlice []string) (outputSlice []string) {
 
 func (d *DeviceSubsList) Add(sub DeviceSubPaths) {
 
-	if _, dupe := d.dedupTarget[sub.Target]; dupe {
+	if _, dupe := d.dedupTarget[sub.Address]; dupe {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
 			Err:       errors.New("duplicate target found"),
 			Component: "Cue",
 			Action:    "add device subscription",
-			Msg:       fmt.Sprintf("target %s already exists in the list", sub.Target),
-			Target:    sub.Target,
+			Msg:       fmt.Sprintf("target %s already exists in the list", sub.Address),
+			Target:    sub.Address,
 		})
 		return
 	}
-	d.dedupTarget[sub.Target] = struct{}{}
+	d.dedupTarget[sub.Address] = struct{}{}
 	cleanPathList := dedupList(sub.Paths)
 	sub.Paths = cleanPathList
 	d.Devices = append(d.Devices, sub)
@@ -210,7 +212,7 @@ func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) 
 	return concreteInvVal
 }
 
-func CueGrabSubs(concreteInvVal cue.Value) {
+func CueGrabSubs(concreteInvVal cue.Value) (CueInputs *DeviceSubsList) {
 	iter_inventory, err := concreteInvVal.Fields()
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
@@ -222,12 +224,13 @@ func CueGrabSubs(concreteInvVal cue.Value) {
 			Target:    "localhost",
 		})
 	}
-	DeviceSubsList := InitDeviceSubsList()
+	CueInputs = InitDeviceSubsList()
 	for iter_inventory.Next() {
 		deviceName := iter_inventory.Selector()
 		deviceVal := iter_inventory.Value()
 
 		ipVal := deviceVal.LookupPath(cue.ParsePath("ip"))
+		deviceNameStr := deviceName.String()
 		ipStr, err := ipVal.String()
 		telemetryPaths := deviceVal.LookupPath(cue.ParsePath("tel_paths"))
 		if !telemetryPaths.Exists() {
@@ -297,12 +300,14 @@ func CueGrabSubs(concreteInvVal cue.Value) {
 			})
 		}
 		device := DeviceSubPaths{
-			Target: ipStr,
-			Paths:  telemPathList,
+			Name:    deviceNameStr,
+			Address: ipStr,
+			Paths:   telemPathList,
 		}
-		DeviceSubsList.Add(device)
+		CueInputs.Add(device)
 		// fmt.Printf("Connecting to device %s at IP %s\n", deviceName, ipStr)
 
 	}
-	fmt.Println(DeviceSubsList.Devices)
+	// fmt.Println(CueInputs.Devices)
+	return CueInputs
 }
