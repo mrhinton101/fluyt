@@ -5,19 +5,16 @@ import (
 	"log/slog"
 
 	cmd "github.com/mrhinton101/fluyt/cmd/fluyt/commands"
-	logger "github.com/mrhinton101/fluyt/internal/app/core"
-	cue "github.com/mrhinton101/fluyt/internal/app/core/cueHandler"
+	cue "github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
+	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
 )
 
 func main() {
 	logfile := logger.InitLogger("fluytLogs.json")
 	defer logfile.Close()
 	schemaDir := "../../schema/"
-	ctx, schemaVals := cue.CueLoadSchemaDir(schemaDir)
-
-	concreteInvVal := cue.CueLoadInventory(ctx, schemaVals, "./inventory.yml")
-	// cue.CueLoadTelPaths(ctx, schemaVals)
-	CueInputs := cue.CueGrabSubs(concreteInvVal)
+	invFile := "./inventory.yml"
+	CueInputs := cue.LoadCueInputs(schemaDir, invFile)
 	defer func() {
 		if r := recover(); r != nil {
 

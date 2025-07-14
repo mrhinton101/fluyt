@@ -9,7 +9,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/encoding/yaml"
-	logger "github.com/mrhinton101/fluyt/internal/app/core"
+	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
 )
 
 type DeviceSubsList struct {
@@ -22,6 +22,10 @@ type DeviceSubPaths struct {
 	Address string
 	Port    string
 	Paths   []string
+}
+
+type ConcreteInv struct {
+	inventory cue.Value
 }
 
 func InitDeviceSubsList() *DeviceSubsList {
@@ -156,33 +160,7 @@ func cueLoadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
 
 }
 
-// func CueLoadTelPaths(ctx *cue.Context, schemaVals []cue.Value) {
-// 	schema := schemaVals[0]
-
-// 	telSchemaVal := cuePathLookup("#telemetry_paths", schema)
-
-// fmt.Println(telSchemaVal)
-// iter, err := telSchemaVal.Fields()
-
-// for iter.Next() {
-// 	telemetryVal := iter.Value()
-// 	telemetryStr, err := telemetryVal.String()
-// 	if err != nil {
-// 		logger.SLogger(logger.LogEntry{
-// 			Level:     slog.LevelError,
-// 			Err:       err,
-// 			Component: "Cue",
-// 			Action:    "get telemetry value",
-// 			Msg:       fmt.Sprintf("Could not get telemetry value for device %v", err),
-// 			Target:    "localhost",
-// 		})
-// 	}
-// 	fmt.Printf("Device %s has telemetry %s\n",  telemetryStr)
-// }
-
-// }
-
-func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal cue.Value) {
+func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal ConcreteInv) {
 	// Load schema directory and all files in the package
 
 	// use the first(and only) schema package. CueLoadSchemaDir already confirms there is a single schema package
@@ -206,12 +184,16 @@ func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) 
 			Target:    "localhost",
 		})
 	}
-	concreteInvVal = unifiedVal.LookupPath(cue.ParsePath("inventory"))
+	concreteInvVal = ConcreteInv{
+		inventory: unifiedVal.LookupPath(cue.ParsePath("inventory"))}
+	// Store the unified value in the ConcreteInv struct
+
 	return concreteInvVal
 }
 
-func CueGrabSubs(concreteInvVal cue.Value) (CueInputs *DeviceSubsList) {
-	iter_inventory, err := concreteInvVal.Fields()
+func (inv *ConcreteInv) LoadSubs() (CueInputs *DeviceSubsList) {
+	inventory := inv.inventory
+	iter_inventory, err := inventory.Fields()
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
@@ -307,5 +289,12 @@ func CueGrabSubs(concreteInvVal cue.Value) (CueInputs *DeviceSubsList) {
 
 	}
 	// fmt.Println(CueInputs.Devices)
+	return CueInputs
+}
+
+func LoadCueInputs(schemaDir, invFile string) (CueInputs *DeviceSubsList) {
+	ctx, schemaVals := CueLoadSchemaDir(schemaDir)
+	ConcreteInv := CueLoadInventory(ctx, schemaVals, invFile)
+	CueInputs = ConcreteInv.LoadSubs()
 	return CueInputs
 }
