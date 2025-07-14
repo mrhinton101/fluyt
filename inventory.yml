@@ -14,3 +14,14 @@ inventory:
       env: lab
     telemetry:
       - aft
+<<<<<<< Updated upstream
+=======
+      - aft
+  # device2:
+  #   ip: "10.1.1.2/22"
+  #   tags:
+  #     region: amer
+  #     env: lab
+  #   telemetry:
+  #     - aft
+>>>>>>> Stashed changes
