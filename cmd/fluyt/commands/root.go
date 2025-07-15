@@ -42,6 +42,9 @@ var CueSubsInputs *cueHandler.DeviceSubsList
 var CueSubsInputs *cueHandler.DeviceSubsList
 
 // CueInputs is a global variable that holds the device subscription list
+var CueSubsInputs *cueHandler.DeviceSubsList
+
+// CueInputs is a global variable that holds the device subscription list
 var CueCapsInputs *cueHandler.DeviceList
 
 // DeviceSubsList is a function that sets the CueInputs variable
