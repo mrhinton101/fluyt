@@ -1,0 +1,44 @@
+package cueHandler
+
+import (
+	"fmt"
+	"log/slog"
+
+	"cuelang.org/go/cue"
+	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
+)
+
+func loadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal concreteInv) {
+	// Load schema directory and all files in the package
+
+	// use the first(and only) schema package. loadSchemaDir already confirms there is a single schema package
+	schema := schemaVals[0]
+
+	invSchema := pathLookup("#inventory", schema)
+
+	invVal := loadYaml(ctx, invFile)
+
+	unifiedInvVal := invSchema.Unify(invVal)
+	if err := unifiedInvVal.Validate(cue.Concrete(true)); err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "unify schema and inventory",
+			Msg:       "error validating unified schema",
+			Target:    "localhost",
+		})
+	}
+	logger.SLogger(logger.LogEntry{
+		Level:     slog.LevelDebug,
+		Component: "Cue",
+		Action:    "debug unified schema",
+		Msg:       fmt.Sprintf("Unified CUE value: %v", unifiedInvVal),
+		Target:    "localhost",
+	})
+	concreteInvVal = concreteInv{
+		inventory: unifiedInvVal.LookupPath(cue.ParsePath("inventory"))}
+	// Store the unified value in the concreteInv struct
+
+	return concreteInvVal
+}

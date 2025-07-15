@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	gnmiClient "github.com/mrhinton101/fluyt/internal/adapter/gnmiClient"
-	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
+	"github.com/mrhinton101/fluyt/internal/adapter/gnmiClient"
+	"github.com/mrhinton101/fluyt/internal/adapter/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ It allows a client to retrieve information about the gNMI version, supported dat
 
 		for _, target := range CueInputs.Devices {
 			fmt.Println("capabilities")
-			capResp := gnmiClient.Capabilities(target, creds)
+			capResp := gnmiClient.Capabilities(target.DeviceInfo, creds)
 			// fmt.Println(resp)
 			for _, m := range capResp.SupportedModels {
 				fmt.Printf("model: %s %s (rev %s)\n", m.Name, m.Organization, m.Version)
@@ -68,24 +68,7 @@ It allows a client to retrieve information about the gNMI version, supported dat
 			}
 
 			fmt.Println("gNMI versions:", capResp.GNMIVersion)
-
-			// var capabilitiesResponse gnmiClient.CapabilitiesResponse
-			// err := json.Unmarshal(resp, &capabilitiesResponse)
-			// if err != nil {
-			// 	logger.SLogger(logger.LogEntry{
-			// 		Level:     slog.LevelError,
-			// 		Err:       err,
-			// 		Component: "gnmiClient",
-			// 		Action:    "unmarshal capabilities response",
-			// 		Msg:       fmt.Sprintf("failed to unmarshal capabilities response for target %s", target.Name),
-			// 		Target:    target.Name,
-			// 	})
-			// fmt.Println(err)
-
-			// }
 		}
-
-		// fmt.Println(resp)
 		return nil
 	},
 }

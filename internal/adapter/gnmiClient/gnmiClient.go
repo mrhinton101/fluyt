@@ -16,7 +16,7 @@ type Credentials struct {
 	Password string
 }
 
-func Capabilities(gnmiTarget cueHandler.DeviceSubPaths, creds Credentials) (capResp *gnmi.CapabilityResponse) {
+func Capabilities(gnmiTarget cueHandler.DeviceInfo, creds Credentials) (capResp *gnmi.CapabilityResponse) {
 	// create a target
 	tg, err := api.NewTarget(
 		api.Name(gnmiTarget.Name),

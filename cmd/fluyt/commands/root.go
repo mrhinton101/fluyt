@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
-	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
+	"github.com/mrhinton101/fluyt/internal/adapter/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -34,9 +34,12 @@ func Execute() {
 	}
 }
 
+// CueInputs is a global variable that holds the device subscription list
 var CueInputs *cueHandler.DeviceSubsList
 
+// DeviceSubsList is a function that sets the CueInputs variable
 func DeviceSubsList(l *cueHandler.DeviceSubsList) { CueInputs = l }
+
 func init() {
 	rootCmd.PersistentFlags().StringVar(&addr, "addr", os.Getenv("GNMI_ADDR"), "Target device address (or GNMI_ADDR)")
 	rootCmd.PersistentFlags().StringVar(&username, "username", os.Getenv("GNMI_USERNAME"), "Username (or GNMI_USERNAME)")

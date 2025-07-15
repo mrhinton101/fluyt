@@ -17,7 +17,8 @@ import "net"
     }
     description?: string
     config?: [...string]
-    pushmode?: "GNMI" | "Terraform" | "Pulumi" 
+    pushmode?: "GNMI" | "Terraform" | "Pulumi"
+    capabilities?: bool
     tel_paths: [for x, y in #telemetry_paths 
     let tel_name = x
     if list.Contains(telemetry, x) 
@@ -36,6 +37,6 @@ import "net"
     
 }
 //create inventory and add device name to device definition
-#inventory: {
+#inventory: { 
     inventory: [k=string]: #device & { name: k }
 }

@@ -17,6 +17,8 @@ type LogEntry struct {
 	Target    string
 }
 
+var ProgramLevel = new(slog.LevelVar)
+
 // Initialize the Logger and open stream to write to file
 func InitLogger(logFileName string) (file *os.File) {
 
@@ -28,8 +30,9 @@ func InitLogger(logFileName string) (file *os.File) {
 	}
 	multiWriter := io.MultiWriter(os.Stdout, file)
 	// Use a TextHandler or JSONHandler depending on what you prefer.
+
 	handler := slog.NewJSONHandler(multiWriter, &slog.HandlerOptions{
-		Level: slog.LevelWarn, // Adjust this as needed
+		Level: ProgramLevel, // Set the log level from the programLevel variable
 	})
 
 	// Set as default logger
