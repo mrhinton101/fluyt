@@ -4,8 +4,13 @@ import (
 	"log/slog"
 	"os"
 
+<<<<<<< HEAD:cmd/fluyt/commands/root.go
 	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
 	"github.com/mrhinton101/fluyt/internal/adapter/logger"
+=======
+	"github.com/mrhinton101/fluyt/cue"
+	"github.com/mrhinton101/fluyt/logger"
+>>>>>>> origin/main:cmd/root.go
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +39,7 @@ func Execute() {
 	}
 }
 
+<<<<<<< HEAD:cmd/fluyt/commands/root.go
 // CueInputs is a global variable that holds the device subscription list
 var CueSubsInputs *cueHandler.DeviceSubsList
 
@@ -46,6 +52,11 @@ func DeviceSubsList(DeviceSubsList *cueHandler.DeviceSubsList) { CueSubsInputs =
 // DeviceCapsList is a function that sets the CueInputs variable
 func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
 
+=======
+var CueInputs *cue.DeviceSubsList
+
+func SetCueInputs(l *cue.DeviceSubsList) { CueInputs = l }
+>>>>>>> origin/main:cmd/root.go
 func init() {
 	rootCmd.PersistentFlags().StringVar(&addr, "addr", os.Getenv("GNMI_ADDR"), "Target device address (or GNMI_ADDR)")
 	rootCmd.PersistentFlags().StringVar(&username, "username", os.Getenv("GNMI_USERNAME"), "Username (or GNMI_USERNAME)")
