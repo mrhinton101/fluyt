@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	cue "github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
+	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
 	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/gnmic/pkg/api"
@@ -16,7 +16,7 @@ type Credentials struct {
 	Password string
 }
 
-func Capabilities(gnmiTarget cue.DeviceSubPaths, creds Credentials) (capResp *gnmi.CapabilityResponse) {
+func Capabilities(gnmiTarget cueHandler.DeviceSubPaths, creds Credentials) (capResp *gnmi.CapabilityResponse) {
 	// create a target
 	tg, err := api.NewTarget(
 		api.Name(gnmiTarget.Name),

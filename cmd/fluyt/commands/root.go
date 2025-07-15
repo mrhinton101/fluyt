@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	cue "github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
+	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
 	logger "github.com/mrhinton101/fluyt/internal/adapter/logger"
 	"github.com/spf13/cobra"
 )
@@ -34,9 +34,9 @@ func Execute() {
 	}
 }
 
-var CueInputs *cue.DeviceSubsList
+var CueInputs *cueHandler.DeviceSubsList
 
-func SetCueInputs(l *cue.DeviceSubsList) { CueInputs = l }
+func DeviceSubsList(l *cueHandler.DeviceSubsList) { CueInputs = l }
 func init() {
 	rootCmd.PersistentFlags().StringVar(&addr, "addr", os.Getenv("GNMI_ADDR"), "Target device address (or GNMI_ADDR)")
 	rootCmd.PersistentFlags().StringVar(&username, "username", os.Getenv("GNMI_USERNAME"), "Username (or GNMI_USERNAME)")

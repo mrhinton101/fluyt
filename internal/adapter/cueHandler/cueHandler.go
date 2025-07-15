@@ -1,4 +1,4 @@
-package cue
+package cueHandler
 
 import (
 	"errors"
@@ -24,11 +24,11 @@ type DeviceSubPaths struct {
 	Paths   []string
 }
 
-type ConcreteInv struct {
+type concreteInv struct {
 	inventory cue.Value
 }
 
-func InitDeviceSubsList() *DeviceSubsList {
+func initDeviceSubsList() *DeviceSubsList {
 	return &DeviceSubsList{
 		Devices:     []DeviceSubPaths{},
 		dedupTarget: make(map[string]struct{}),
@@ -75,7 +75,7 @@ func (d *DeviceSubsList) Add(sub DeviceSubPaths) {
 	d.Devices = append(d.Devices, sub)
 }
 
-func CueLoadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Value) {
+func loadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Value) {
 	ctx = cuecontext.New()
 	instances := load.Instances([]string{schema_dir}, nil)
 
@@ -125,7 +125,7 @@ func CueLoadSchemaDir(schema_dir string) (ctx *cue.Context, schemaVals []cue.Val
 	return ctx, schemaVals
 }
 
-func cuePathLookup(path string, schema cue.Value) (pathResults cue.Value) {
+func pathLookup(path string, schema cue.Value) (pathResults cue.Value) {
 	// Extract the `#Inventory` definition from schema
 	pathResults = schema.LookupPath(cue.ParsePath(path))
 	if !pathResults.Exists() {
@@ -142,7 +142,7 @@ func cuePathLookup(path string, schema cue.Value) (pathResults cue.Value) {
 
 }
 
-func cueLoadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
+func loadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
 	// Load YAML inventory file
 	yamlFile, err := yaml.Extract(yamlfile, nil)
 	if err != nil {
@@ -160,15 +160,15 @@ func cueLoadYaml(ctx *cue.Context, yamlfile string) (yamlVal cue.Value) {
 
 }
 
-func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal ConcreteInv) {
+func loadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) (concreteInvVal concreteInv) {
 	// Load schema directory and all files in the package
 
-	// use the first(and only) schema package. CueLoadSchemaDir already confirms there is a single schema package
+	// use the first(and only) schema package. loadSchemaDir already confirms there is a single schema package
 	schema := schemaVals[0]
 
-	invSchema := cuePathLookup("#inventory", schema)
+	invSchema := pathLookup("#inventory", schema)
 
-	invVal := cueLoadYaml(ctx, invFile)
+	invVal := loadYaml(ctx, invFile)
 
 	unifiedVal := invSchema.Unify(invVal)
 	// fmt.Println("Unified CUE value:")
@@ -184,14 +184,14 @@ func CueLoadInventory(ctx *cue.Context, schemaVals []cue.Value, invFile string) 
 			Target:    "localhost",
 		})
 	}
-	concreteInvVal = ConcreteInv{
+	concreteInvVal = concreteInv{
 		inventory: unifiedVal.LookupPath(cue.ParsePath("inventory"))}
-	// Store the unified value in the ConcreteInv struct
+	// Store the unified value in the concreteInv struct
 
 	return concreteInvVal
 }
 
-func (inv *ConcreteInv) LoadSubs() (CueInputs *DeviceSubsList) {
+func (inv *concreteInv) loadSubs() (DeviceSubsList *DeviceSubsList) {
 	inventory := inv.inventory
 	iter_inventory, err := inventory.Fields()
 	if err != nil {
@@ -204,7 +204,7 @@ func (inv *ConcreteInv) LoadSubs() (CueInputs *DeviceSubsList) {
 			Target:    "localhost",
 		})
 	}
-	CueInputs = InitDeviceSubsList()
+	DeviceSubsList = initDeviceSubsList()
 	for iter_inventory.Next() {
 		deviceName := iter_inventory.Selector()
 		deviceVal := iter_inventory.Value()
@@ -284,17 +284,17 @@ func (inv *ConcreteInv) LoadSubs() (CueInputs *DeviceSubsList) {
 			Address: ipStr,
 			Paths:   telemPathList,
 		}
-		CueInputs.Add(device)
+		DeviceSubsList.Add(device)
 		// fmt.Printf("Connecting to device %s at IP %s\n", deviceName, ipStr)
 
 	}
-	// fmt.Println(CueInputs.Devices)
-	return CueInputs
+	// fmt.Println(DeviceSubsList.Devices)
+	return DeviceSubsList
 }
 
-func LoadCueInputs(schemaDir, invFile string) (CueInputs *DeviceSubsList) {
-	ctx, schemaVals := CueLoadSchemaDir(schemaDir)
-	ConcreteInv := CueLoadInventory(ctx, schemaVals, invFile)
-	CueInputs = ConcreteInv.LoadSubs()
-	return CueInputs
+func LoadDeviceSubsList(schemaDir, invFile string) (DeviceSubsList *DeviceSubsList) {
+	ctx, schemaVals := loadSchemaDir(schemaDir)
+	concreteInv := loadInventory(ctx, schemaVals, invFile)
+	DeviceSubsList = concreteInv.loadSubs()
+	return DeviceSubsList
 }
