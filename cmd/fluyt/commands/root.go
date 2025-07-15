@@ -39,25 +39,17 @@ func Execute() {
 var CueSubsInputs *cueHandler.DeviceSubsList
 
 // CueInputs is a global variable that holds the device subscription list
+var CueSubsInputs *cueHandler.DeviceSubsList
+
+// CueInputs is a global variable that holds the device subscription list
 var CueCapsInputs *cueHandler.DeviceList
 
 // DeviceSubsList is a function that sets the CueInputs variable
 func DeviceSubsList(DeviceSubsList *cueHandler.DeviceSubsList) { CueSubsInputs = DeviceSubsList }
-<<<<<<< HEAD
-=======
-
-// DeviceCapsList is a function that sets the CueInputs variable
-func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
->>>>>>> be872ed (complete separation of caps and subs)
 
 // DeviceCapsList is a function that sets the CueInputs variable
 func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
 
-=======
-var CueInputs *cue.DeviceSubsList
-
-func SetCueInputs(l *cue.DeviceSubsList) { CueInputs = l }
->>>>>>> origin/main:cmd/root.go
 func init() {
 	rootCmd.PersistentFlags().StringVar(&addr, "addr", os.Getenv("GNMI_ADDR"), "Target device address (or GNMI_ADDR)")
 	rootCmd.PersistentFlags().StringVar(&username, "username", os.Getenv("GNMI_USERNAME"), "Username (or GNMI_USERNAME)")
