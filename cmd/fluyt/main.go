@@ -14,9 +14,9 @@ func main() {
 	defer logfile.Close()
 	schemaDir := "../../schema/"
 	invFile := "./inventory.yml"
-	DeviceSubsList := cueHandler.LoadDeviceSubsList(schemaDir, invFile)
+	DeviceCapsList := cueHandler.LoadDeviceCapsList(schemaDir, invFile)
 
-	cmd.DeviceSubsList(DeviceSubsList)
+	cmd.DeviceCapsList(DeviceCapsList)
 	cmd.Execute()
 
 }

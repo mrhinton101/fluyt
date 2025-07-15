@@ -108,7 +108,7 @@ func (inv *concreteInv) loadSubs() (DeviceSubsList *DeviceSubsList) {
 	}
 	return DeviceSubsList
 }
-func (inv *concreteInv) loadCaps() (DeviceList *DeviceList) {
+func (inv *concreteInv) loadCaps() (DeviceCapList *DeviceList) {
 	inventory := inv.inventory
 	iter_inventory, err := inventory.Fields()
 	if err != nil {
@@ -120,6 +120,9 @@ func (inv *concreteInv) loadCaps() (DeviceList *DeviceList) {
 			Msg:       "failed to iterate over devices fields. are they defined?",
 			Target:    "localhost",
 		})
+	}
+	DeviceCapList = &DeviceList{
+		Devices: []DeviceInfo{},
 	}
 	for iter_inventory.Next() {
 		deviceName := iter_inventory.Selector()
@@ -154,9 +157,23 @@ func (inv *concreteInv) loadCaps() (DeviceList *DeviceList) {
 			Name:    deviceNameStr,
 			Address: ipStr}
 
-		DeviceList.Add(device)
+		DeviceCapList.Add(device)
 
 	}
+	logger.SLogger(logger.LogEntry{
+		Level:     slog.LevelDebug,
+		Component: "Cue",
+		Action:    "debug device list",
+		Msg:       fmt.Sprintf("Loaded %d from inventory", DeviceCapList.Devices),
+		Target:    "localhost",
+	})
+	return DeviceCapList
+}
+
+func LoadDeviceCapsList(schemaDir, invFile string) (DeviceList *DeviceList) {
+	ctx, schemaVals := loadSchemaDir(schemaDir)
+	concreteInv := loadInventory(ctx, schemaVals, invFile)
+	DeviceList = concreteInv.loadCaps()
 	return DeviceList
 }
 

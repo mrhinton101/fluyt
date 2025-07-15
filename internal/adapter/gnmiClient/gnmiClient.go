@@ -79,3 +79,5 @@ func Capabilities(gnmiTarget cueHandler.DeviceInfo, creds Credentials) (capResp 
 	}
 	return capResp
 }
+
+// func Subscriptions

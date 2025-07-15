@@ -50,15 +50,13 @@ It allows a client to retrieve information about the gNMI version, supported dat
 			return err
 		}
 
-		fmt.Println(CueInputs)
+		fmt.Println(CueCapsInputs)
 		creds := gnmiClient.Credentials{
 			Username: username,
 			Password: password}
 
-		for _, target := range CueInputs.Devices {
-			fmt.Println("capabilities")
-			capResp := gnmiClient.Capabilities(target.DeviceInfo, creds)
-			// fmt.Println(resp)
+		for _, target := range CueCapsInputs.Devices {
+			capResp := gnmiClient.Capabilities(target, creds)
 			for _, m := range capResp.SupportedModels {
 				fmt.Printf("model: %s %s (rev %s)\n", m.Name, m.Organization, m.Version)
 			}
