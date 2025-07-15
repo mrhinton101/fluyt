@@ -4,13 +4,8 @@ import (
 	"log/slog"
 	"os"
 
-<<<<<<< HEAD:cmd/fluyt/commands/root.go
-	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
-	"github.com/mrhinton101/fluyt/internal/adapter/logger"
-=======
 	"github.com/mrhinton101/fluyt/cue"
 	"github.com/mrhinton101/fluyt/logger"
->>>>>>> origin/main:cmd/root.go
 	"github.com/spf13/cobra"
 )
 
@@ -48,6 +43,12 @@ var CueCapsInputs *cueHandler.DeviceList
 
 // DeviceSubsList is a function that sets the CueInputs variable
 func DeviceSubsList(DeviceSubsList *cueHandler.DeviceSubsList) { CueSubsInputs = DeviceSubsList }
+<<<<<<< HEAD
+=======
+
+// DeviceCapsList is a function that sets the CueInputs variable
+func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
+>>>>>>> be872ed (complete separation of caps and subs)
 
 // DeviceCapsList is a function that sets the CueInputs variable
 func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
