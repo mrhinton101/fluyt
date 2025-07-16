@@ -2,23 +2,25 @@ package gnmi
 
 import (
 	"fmt"
+
+	"github.com/openconfig/gnmi/proto/gnmi"
 )
 
-type CapabilityResult struct {
+type RawCapabilityResult struct {
 	Target    string
-	Encodings []string
-	Models    []string
-	Versions  []string
+	Encodings []gnmi.Encoding
+	Models    []*gnmi.ModelData
+	Versions  string
 }
 
-func ValidateCapabilityResponse(target string, encodings, models, versions []string) (*CapabilityResult, error) {
-	if len(encodings) == 0 && len(models) == 0 && len(versions) == 0 {
+func ValidateCapabilityResponse(target string, capResp gnmi.CapabilityResponse) (*RawCapabilityResult, error) {
+	if len(capResp.GNMIVersion) == 0 && len(capResp.SupportedModels) == 0 && len(capResp.SupportedEncodings) == 0 {
 		return nil, fmt.Errorf("no capabilities received for target %s", target)
 	}
-	return &CapabilityResult{
+	return &RawCapabilityResult{
 		Target:    target,
-		Encodings: encodings,
-		Models:    models,
-		Versions:  versions,
+		Encodings: capResp.SupportedEncodings,
+		Models:    capResp.SupportedModels,
+		Versions:  capResp.GNMIVersion,
 	}, nil
 }

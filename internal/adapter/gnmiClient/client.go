@@ -1,40 +1,90 @@
 package gnmiClient
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"log/slog"
+
+	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/domain/gnmi"
+	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
+	"github.com/openconfig/gnmic/pkg/api"
 )
 
 type GNMIClientImpl struct {
-	target string
-	// whatever underlying gnmi-specific fields
+	Name    string
+	Address string
+	Port    string
 }
 
-func NewGNMIClient(target string) ports.GNMIClient {
-	return &GNMIClientImpl{target: target}
+func NewGNMIClient(device cue.DeviceSubPaths) ports.GNMIClient {
+	return &GNMIClientImpl{
+		Name:    device.Name,
+		Address: fmt.Sprintf("%s:6030", device.Address),
+		Port:    device.Port,
+	}
 }
 
-func (c *GNMIClientImpl) Connect() error {
-	// actual gNMI client dial logic here
-	return nil
-}
-
-func (c *GNMIClientImpl) Capabilities() (map[string][]string, error) {
+func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 	// Run the actual gNMI Capabilities RPC and get result
-	rawModels := []string{"openconfig-interfaces", "openconfig-bgp"}
-	rawEncodings := []string{"JSON_IETF", "PROTO"}
-	rawVersions := []string{"0.7.0"}
+	tg, err := api.NewTarget(
+		api.Name(c.Name),
+		api.Address(c.Address),
+		api.Username("bhinton"),
+		api.Password("Mycrewnm3!!!!!!!"),
+		api.SkipVerify(true),
+		api.Insecure(true),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	result, err := gnmi.ValidateCapabilityResponse(c.target, rawEncodings, rawModels, rawVersions)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// create a gNMI client
+	err = tg.CreateGNMIClient(ctx)
+	if err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Component: "gnmiClient",
+			Msg:       fmt.Sprintf("failed to create gNMI client for target"),
+			Err:       err,
+			Target:    c.Name,
+		})
+		log.Fatal(err)
+	}
+	defer tg.Close()
+
+	// send a gNMI capabilities request to the created target
+	capResp, err := tg.Capabilities(ctx)
+	fmt.Println("capresp:")
+	if err != nil {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Component: "gnmiClient",
+			Msg:       "failed to get capabilities from target",
+			Err:       err,
+			Target:    c.Name,
+		})
+		log.Fatal(err)
+	}
+	// rawModels := []string{"openconfig-interfaces", "openconfig-bgp"}
+	// rawEncodings := []string{"JSON_IETF", "PROTO"}
+	// rawVersions := []string{"0.7.0"}
+
+	result, err := gnmi.ValidateCapabilityResponse(c.Address, *capResp)
 	if err != nil {
 		return nil, err
 	}
 
 	// for now flatten all capability fields into a map
-	return map[string][]string{
+	return map[string]interface{}{
 		"encodings": result.Encodings,
 		"models":    result.Models,
-		"versions":  result.Versions,
+		"versions":  []string{result.Versions},
 	}, nil
 }
 
@@ -42,6 +92,6 @@ func (c *GNMIClientImpl) Close() error {
 	return nil
 }
 
-func (c *GNMIClientImpl) Target() string {
-	return c.target
-}
+// func (c *GNMIClientImpl) Target() string {
+// 	return c.target
+// }
