@@ -1,54 +1,37 @@
-package cmd
+package commands
 
 import (
-	"log/slog"
-	"os"
+	"fmt"
+	"log"
 
 	"github.com/mrhinton101/fluyt/internal/adapter/cueHandler"
-	"github.com/mrhinton101/fluyt/internal/adapter/logger"
-	"github.com/spf13/cobra"
+	"github.com/mrhinton101/fluyt/internal/adapter/gnmiClient"
+	"github.com/mrhinton101/fluyt/internal/app/usecase"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "fluyt",
-	Short: "Tool to interact with grpc for network devices",
-	Long:  `This tool will be used to interact via RPCs over GNMI. RPCs supported will be Get, Subscribe and Set`,
-}
-
 var (
-	username string
-	addr     string
-	password string
+	schemaDir = "../../schema/"
+	invFile   = "./inventory.yml"
 )
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		logger.SLogger(logger.LogEntry{
-			Level:     slog.LevelError,
-			Err:       err,
-			Component: "cli",
-			Action:    "execute",
-			Msg:       "fatal error in CLI",
-			Target:    "self",
-		})
+	// Instantiate the CueHandler
+	cue := cueHandler.NewCueHandler()
+
+	// Call the method on the instance
+	devices, err := cue.LoadDeviceCapsList(schemaDir, invFile)
+	if err != nil {
+		log.Fatalf("failed to load devices: %v", err)
 	}
-}
 
-// CueInputs is a global variable that holds the device subscription list
-var CueSubsInputs *cueHandler.DeviceSubsList
+	// Use the devices in the usecase layer
+	results := usecase.CollectCapabilities(devices, gnmiClient.NewGNMIClient)
 
-// CueInputs is a global variable that holds the device subscription list
-var CueCapsInputs *cueHandler.DeviceList
-
-// DeviceSubsList is a function that sets the CueInputs variable
-func DeviceSubsList(DeviceSubsList *cueHandler.DeviceSubsList) { CueSubsInputs = DeviceSubsList }
-
-// DeviceCapsList is a function that sets the CueInputs variable
-func DeviceCapsList(DeviceCapsList *cueHandler.DeviceList) { CueCapsInputs = DeviceCapsList }
-
-func init() {
-	rootCmd.PersistentFlags().StringVar(&addr, "addr", os.Getenv("GNMI_ADDR"), "Target device address (or GNMI_ADDR)")
-	rootCmd.PersistentFlags().StringVar(&username, "username", os.Getenv("GNMI_USERNAME"), "Username (or GNMI_USERNAME)")
-	rootCmd.PersistentFlags().StringVar(&password, "password", os.Getenv("GNMI_PASSWORD"), "Password (or GNMI_PASSWORD)")
-	rootCmd.AddCommand(capabilitiesCmd)
+	// Print the results
+	for _, r := range results {
+		fmt.Printf("Target: %s\n", r.Target)
+		fmt.Printf("Encodings: %v\n", r.Encodings)
+		fmt.Printf("Models: %v\n", r.Models)
+		fmt.Printf("Versions: %v\n\n", r.Versions)
+	}
 }
