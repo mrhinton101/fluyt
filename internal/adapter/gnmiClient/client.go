@@ -32,8 +32,8 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 	tg, err := api.NewTarget(
 		api.Name(c.Name),
 		api.Address(c.Address),
-		api.Username("bhinton"),
-		api.Password("Mycrewnm3!!!!!!!"),
+		api.Username("admin"),
+		api.Password("admin"),
 		api.SkipVerify(true),
 		api.Insecure(true),
 	)
