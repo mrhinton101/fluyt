@@ -1,0 +1,31 @@
+// package cue
+
+// type DeviceSubPaths struct {
+// 	Name    string
+// 	Address string
+// 	Port    string
+// 	Paths   []string
+// }
+
+// type DeviceSubsList struct {
+// 	Devices     []DeviceSubPaths
+// 	dedupTarget map[string]struct{}
+// }
+
+// // NewDeviceSubsList initializes an empty DeviceSubsList
+// func NewDeviceSubsList() *DeviceSubsList {
+// 	return &DeviceSubsList{
+// 		Devices:     []DeviceSubPaths{},
+// 		dedupTarget: make(map[string]struct{}),
+// 	}
+// }
+
+// // Add adds a device if the address is not already present
+// func (d *DeviceSubsList) Add(sub DeviceSubPaths) bool {
+// 	if _, exists := d.dedupTarget[sub.Address]; exists {
+// 		return false // duplicate found
+// 	}
+// 	d.dedupTarget[sub.Address] = struct{}{}
+// 	d.Devices = append(d.Devices, sub)
+// 	return true
+// }
