@@ -19,7 +19,7 @@ func Execute() {
 	cue := cueHandler.NewCueHandler()
 
 	// Call the method on the instance
-	devices, err := cue.LoadDeviceCapsList(schemaDir, invFile)
+	devices, err := cue.LoadDeviceList(schemaDir, invFile)
 	if err != nil {
 		log.Fatalf("failed to load devices: %v", err)
 	}

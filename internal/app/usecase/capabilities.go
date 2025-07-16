@@ -15,7 +15,7 @@ type CapabilitiesResult struct {
 	Versions  string
 }
 
-func CollectCapabilities(devices *cue.DeviceSubsList, clientFactory func(cue.DeviceSubPaths) ports.GNMIClient) []CapabilitiesResult {
+func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device) ports.GNMIClient) []CapabilitiesResult {
 	results := []CapabilitiesResult{}
 
 	for _, device := range devices.Devices {

@@ -19,7 +19,7 @@ type GNMIClientImpl struct {
 	Port    string
 }
 
-func NewGNMIClient(device cue.DeviceSubPaths) ports.GNMIClient {
+func NewGNMIClient(device cue.Device) ports.GNMIClient {
 	return &GNMIClientImpl{
 		Name:    device.Name,
 		Address: fmt.Sprintf("%s:6030", device.Address),

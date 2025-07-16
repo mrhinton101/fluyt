@@ -9,17 +9,18 @@ import (
 )
 
 type DeviceSubPaths struct {
-	Name    string
-	Address string
-	Port    string // optional
-	Paths   []string
+	Device
+	Paths []string
 }
 
-type DeviceCapsPaths struct {
+type Device struct {
 	Name    string
 	Address string
 	Port    string // optional
-	Paths   []string
+}
+
+type DeviceList struct {
+	Devices []Device
 }
 
 type DeviceSubsList struct {
@@ -31,6 +32,12 @@ func NewDeviceSubsList() *DeviceSubsList {
 	return &DeviceSubsList{
 		Devices:     []DeviceSubPaths{},
 		dedupTarget: make(map[string]struct{}),
+	}
+}
+
+func NewDeviceList() *DeviceList {
+	return &DeviceList{
+		Devices: []Device{},
 	}
 }
 
@@ -48,6 +55,10 @@ func (d *DeviceSubsList) Add(sub DeviceSubPaths) {
 	}
 	d.dedupTarget[sub.Address] = struct{}{}
 	sub.Paths = dedupList(sub.Paths)
+	d.Devices = append(d.Devices, sub)
+}
+
+func (d *DeviceList) Add(sub Device) {
 	d.Devices = append(d.Devices, sub)
 }
 
