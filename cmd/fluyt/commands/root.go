@@ -30,8 +30,15 @@ func Execute() {
 	// Print the results
 	for _, r := range results {
 		fmt.Printf("Target: %s\n", r.Target)
-		fmt.Printf("Encodings: %v\n", r.Encodings)
-		fmt.Printf("Models: %v\n", r.Models)
+		fmt.Printf("Encodings:\n")
+		for _, encoding := range r.Encodings {
+			fmt.Printf("	- %v\n", encoding)
+		}
+		fmt.Printf("Models:\n")
+		for _, model := range r.Models {
+			fmt.Printf("	- %v\n", model)
+		}
+
 		fmt.Printf("Versions: %v\n\n", r.Versions)
 	}
 }

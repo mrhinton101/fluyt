@@ -10,9 +10,9 @@ import (
 
 type CapabilitiesResult struct {
 	Target    string
-	Encodings interface{}
-	Models    interface{}
-	Versions  interface{}
+	Encodings []string
+	Models    []string
+	Versions  string
 }
 
 func CollectCapabilities(devices *cue.DeviceSubsList, clientFactory func(cue.DeviceSubPaths) ports.GNMIClient) []CapabilitiesResult {
@@ -36,9 +36,9 @@ func CollectCapabilities(devices *cue.DeviceSubsList, clientFactory func(cue.Dev
 
 		results = append(results, CapabilitiesResult{
 			Target:    device.Address,
-			Encodings: caps["encodings"],
-			Models:    caps["models"],
-			Versions:  caps["versions"],
+			Encodings: caps["encodings"].([]string),
+			Models:    caps["models"].([]string),
+			Versions:  caps["versions"].(string),
 		})
 	}
 

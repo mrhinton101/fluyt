@@ -71,27 +71,27 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 		})
 		log.Fatal(err)
 	}
-	// rawModels := []string{"openconfig-interfaces", "openconfig-bgp"}
-	// rawEncodings := []string{"JSON_IETF", "PROTO"}
-	// rawVersions := []string{"0.7.0"}
 
-	result, err := gnmi.ValidateCapabilityResponse(c.Address, *capResp)
+	resp, err := gnmi.ValidateCapabilityResponse(c.Address, *capResp)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert to map[string]interface{}
+	result, err := gnmi.UnmarshalCapabilityResponse(resp)
 	if err != nil {
 		return nil, err
 	}
 
 	// for now flatten all capability fields into a map
 	return map[string]interface{}{
+		"target":    result.Target,
 		"encodings": result.Encodings,
 		"models":    result.Models,
-		"versions":  []string{result.Versions},
+		"versions":  result.Versions,
 	}, nil
 }
 
 func (c *GNMIClientImpl) Close() error {
 	return nil
 }
-
-// func (c *GNMIClientImpl) Target() string {
-// 	return c.target
-// }
