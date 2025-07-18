@@ -9,14 +9,14 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/encoding/yaml"
-
 	cueInternal "github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
+	"github.com/mrhinton101/fluyt/internal/app/ports"
 )
 
 type CueHandler struct{}
 
-func NewCueHandler() *CueHandler {
+func NewCueHandler() ports.CueHandler {
 	return &CueHandler{}
 }
 

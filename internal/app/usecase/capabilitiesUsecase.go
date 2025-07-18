@@ -41,6 +41,5 @@ func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device)
 			Versions:  caps["versions"].(string),
 		})
 	}
-
 	return results
 }

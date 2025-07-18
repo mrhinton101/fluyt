@@ -1,6 +1,6 @@
 inventory:
   device1:
-    ip: "100.126.224.11"
+    ip: "192.168.121.101"
     tags:
       region: amer
       env: lab
