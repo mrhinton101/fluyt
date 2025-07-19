@@ -92,6 +92,6 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 	}, nil
 }
 
-func (c *GNMIClientImpl) Close() error {
-	return nil
+func (c *GNMIClientImpl) GetAddress() string {
+	return c.Address
 }

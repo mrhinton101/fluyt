@@ -26,7 +26,7 @@ func Execute() {
 
 	// Use the devices in the usecase layer
 	results := usecase.CollectCapabilities(devices, gnmiClient.NewGNMIClient)
-
+	fmt.Println("goroutine finished")
 	// Print the results
 	for _, r := range results {
 		fmt.Printf("Target: %s\n", r.Target)
