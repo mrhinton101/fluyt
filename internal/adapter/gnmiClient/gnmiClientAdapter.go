@@ -10,6 +10,7 @@ import (
 	"github.com/mrhinton101/fluyt/domain/gnmi"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
+	"github.com/openconfig/gnmi/proto/target"
 	"github.com/openconfig/gnmic/pkg/api"
 )
 
@@ -17,6 +18,7 @@ type GNMIClientImpl struct {
 	Name    string
 	Address string
 	Port    string
+	tg      *target.Target
 }
 
 func NewGNMIClient(device cue.Device) ports.GNMIClient {
@@ -27,7 +29,7 @@ func NewGNMIClient(device cue.Device) ports.GNMIClient {
 	}
 }
 
-func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
+func (c *GNMIClientImpl) Init() error {
 	// Run the actual gNMI Capabilities RPC and get result
 	tg, err := api.NewTarget(
 		api.Name(c.Name),
@@ -39,6 +41,7 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 	)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -56,10 +59,42 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 		})
 		log.Fatal(err)
 	}
-	defer tg.Close()
+	c.tg = c.tg
+	return nil
+}
+func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
+	// Run the actual gNMI Capabilities RPC and get result
+	// tg, err := api.NewTarget(
+	// 	api.Name(c.Name),
+	// 	api.Address(c.Address),
+	// 	api.Username("admin"),
+	// 	api.Password("admin"),
+	// 	api.SkipVerify(true),
+	// 	api.Insecure(true),
+	// )
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// ctx, cancel := context.WithCancel(context.Background())
+	// defer cancel()
+
+	// // create a gNMI client
+	// err = tg.CreateGNMIClient(ctx)
+	// if err != nil {
+	// 	logger.SLogger(logger.LogEntry{
+	// 		Level:     slog.LevelError,
+	// 		Component: "gnmiClient",
+	// 		Msg:       fmt.Sprintf("failed to create gNMI client for target"),
+	// 		Err:       err,
+	// 		Target:    c.Name,
+	// 	})
+	// 	log.Fatal(err)
+	// }
+	// defer tg.Close()
 
 	// send a gNMI capabilities request to the created target
-	capResp, err := tg.Capabilities(ctx)
+	capResp, err := c.Capabilities(ctx)
 	fmt.Println("capresp:")
 	if err != nil {
 		logger.SLogger(logger.LogEntry{
@@ -91,6 +126,71 @@ func (c *GNMIClientImpl) Capabilities() (map[string]interface{}, error) {
 		"versions":  result.Versions,
 	}, nil
 }
+
+// func (c *GNMIClientImpl) GetBgpRib() (gnmi.BgpRibRoutes) {
+// 	// Run the actual gNMI Capabilities RPC and get result
+// 	tg, err := api.NewTarget(
+// 		api.Name(c.Name),
+// 		api.Address(c.Address),
+// 		api.Username("admin"),
+// 		api.Password("admin"),
+// 		api.SkipVerify(true),
+// 		api.Insecure(true),
+// 	)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
+
+// 	// create a gNMI client
+// 	err = tg.CreateGNMIClient(ctx)
+// 	if err != nil {
+// 		logger.SLogger(logger.LogEntry{
+// 			Level:     slog.LevelError,
+// 			Component: "gnmiClient",
+// 			Msg:       fmt.Sprintf("failed to create gNMI client for target"),
+// 			Err:       err,
+// 			Target:    c.Name,
+// 		})
+// 		log.Fatal(err)
+// 	}
+// 	defer tg.Close()
+
+// 	// send a gNMI capabilities request to the created target
+// 	capResp, err := tg.Capabilities(ctx)
+// 	fmt.Println("capresp:")
+// 	if err != nil {
+// 		logger.SLogger(logger.LogEntry{
+// 			Level:     slog.LevelError,
+// 			Component: "gnmiClient",
+// 			Msg:       "failed to get capabilities from target",
+// 			Err:       err,
+// 			Target:    c.Name,
+// 		})
+// 		log.Fatal(err)
+// 	}
+
+// 	resp, err := gnmi.ValidateCapabilityResponse(c.Address, *capResp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// convert to map[string]interface{}
+// 	result, err := gnmi.UnmarshalCapabilityResponse(resp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	// for now flatten all capability fields into a map
+// 	return map[string]interface{}{
+// 		"target":    result.Target,
+// 		"encodings": result.Encodings,
+// 		"models":    result.Models,
+// 		"versions":  result.Versions,
+// 	}, nil
+// }
 
 func (c *GNMIClientImpl) GetAddress() string {
 	return c.Address

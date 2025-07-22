@@ -18,6 +18,24 @@ type CleanCapabilityResponse struct {
 	Versions  string
 }
 
+type BgpRibRoute struct {
+	Origin string `json:"origin"`
+	PathID int    `json:"path-id"`
+	Prefix string `json:"prefix"`
+	State  struct {
+		AttrIndex    string `json:"attr-index"`
+		LastModified string `json:"last-modified"`
+		Origin       string `json:"origin"`
+		PathID       int    `json:"path-id"`
+		Prefix       string `json:"prefix"`
+		ValidRoute   bool   `json:"valid-route"`
+	} `json:"state"`
+}
+
+type BgpRibRoutes struct {
+	Routes []BgpRibRoute `json:"openconfig-network-instance:route"`
+}
+
 func ValidateCapabilityResponse(target string, capResp gnmi.CapabilityResponse) (*GNMICapabilityResponse, error) {
 	if len(capResp.GNMIVersion) == 0 && len(capResp.SupportedModels) == 0 && len(capResp.SupportedEncodings) == 0 {
 		return nil, fmt.Errorf("no capabilities received for target %s", target)
