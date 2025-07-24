@@ -70,6 +70,7 @@ func main() {
 	for _, n := range val {
 		for _, v := range n.Update {
 			fmt.Println()
+			fmt.Println(v)
 			test1 := v.Val
 			// fmt.Println(test1)
 			test2 := test1.GetJsonIetfVal()

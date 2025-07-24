@@ -41,4 +41,10 @@ func Execute() {
 
 		fmt.Printf("Versions: %v\n\n", r.Versions)
 	}
+	bgpResults := usecase.CollectBgpRib(devices, gnmiClient.NewGNMIClient)
+	for _, bgpRib := range bgpResults {
+		for _, route := range bgpRib {
+			fmt.Printf("Prefix: %s, \n", route.Prefix)
+		}
+	}
 }
