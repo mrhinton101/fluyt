@@ -22,9 +22,9 @@ func main() {
 
 	command := os.Args[1]
 	switch command {
-	case "tui":
-		fmt.Println("Starting TUI...")
-		tui.Run()
+	// case "tui":
+	// 	fmt.Println("Starting TUI...")
+	// 	tui.Run()
 	case "cli":
 		fmt.Println("Starting CLI...")
 		cli.Execute()
