@@ -31,7 +31,7 @@ func main() {
 	// create a target
 	tg, err := api.NewTarget(
 		api.Name("srl1"),
-		api.Address("192.168.121.102:6030"),
+		api.Address("192.168.121.101:6030"),
 		api.Username("admin"),
 		api.Password("admin"),
 		api.SkipVerify(true),

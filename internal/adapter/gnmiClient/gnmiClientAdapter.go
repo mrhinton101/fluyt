@@ -130,6 +130,16 @@ func (c *GNMIClientImpl) GetBgpRibs(ctx context.Context) (gnmi.BgpRibs, error) {
 	}
 	val := getResp.GetNotification()
 	BgpRib := ParseBgpRibResp(val)
+	if len(BgpRib) == 0 {
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       fmt.Errorf("nil BGP RIB received"),
+			Component: "gNMI",
+			Action:    "GetBgpRib",
+			Msg:       "nil BGP RIB received. Is provider bgp enabled on the device?",
+			Target:    c.Address,
+		})
+	}
 
 	return BgpRib, nil
 }
@@ -209,8 +219,8 @@ func ParseBgpRibResp(notifs []*pb.Notification) gnmi.BgpRibs {
 		for _, u := range n.Update {
 			vrf := extractVRF(u.Path)
 
-			var routes gnmi.GnmiBgpRibRoutes
-			err := json.Unmarshal(u.Val.GetJsonIetfVal(), &routes)
+			var gnmiRib gnmi.GnmiBgpRibRoutes
+			err := json.Unmarshal(u.Val.GetJsonIetfVal(), &gnmiRib)
 			if err != nil {
 				logger.SLogger(logger.LogEntry{
 					Level:     slog.LevelError,
@@ -221,12 +231,13 @@ func ParseBgpRibResp(notifs []*pb.Notification) gnmi.BgpRibs {
 					Target:    vrf.Name})
 				continue
 			}
-			fmt.Println("routes:", routes)
+			// fmt.Println("routes:", gnmiRib)
 			if ribs[vrf] == nil {
 				ribs[vrf] = make(map[gnmi.BgpRibKey]gnmi.BgpRibRoute)
 			}
 
-			for _, r := range routes.Routes {
+			for _, r := range gnmiRib.Routes {
+				fmt.Println("route:", r)
 				key := gnmi.BgpRibKey{Prefix: r.Prefix}
 				ribs[vrf][key] = r
 			}
