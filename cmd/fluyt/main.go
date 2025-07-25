@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/mrhinton101/fluyt/cmd/fluyt/cli"
-	"github.com/mrhinton101/fluyt/cmd/fluyt/webui"
+	"github.com/mrhinton101/fluyt/cmd/fluyt/web"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 )
 
@@ -28,9 +28,9 @@ func main() {
 	case "cli":
 		fmt.Println("Starting CLI...")
 		cli.Execute()
-	case "webui":
-		fmt.Println("Starting WebUI...")
-		webui.StartServer()
+	case "web":
+		fmt.Println("Starting web...")
+		web.StartServer()
 		return
 
 	default:

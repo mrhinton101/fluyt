@@ -129,8 +129,8 @@ func (c *GNMIClientImpl) GetBgpRibs(ctx context.Context) (gnmi.BgpRibs, error) {
 		log.Fatal(err)
 	}
 	val := getResp.GetNotification()
-	BgpRib := ParseBgpRibResp(val)
-	if len(BgpRib) == 0 {
+	parsedRib := ParseBgpRibResp(val)
+	if len(parsedRib) == 0 {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
 			Err:       fmt.Errorf("nil BGP RIB received"),
@@ -140,7 +140,8 @@ func (c *GNMIClientImpl) GetBgpRibs(ctx context.Context) (gnmi.BgpRibs, error) {
 			Target:    c.Address,
 		})
 	}
-
+	BgpRib := make(gnmi.BgpRibs)
+	BgpRib[gnmi.Device(c.Address)] = parsedRib
 	return BgpRib, nil
 }
 
@@ -212,7 +213,7 @@ func extractVRF(path *pb.Path) gnmi.BgpVrfName {
 	return gnmi.BgpVrfName{Name: ""}
 }
 
-func ParseBgpRibResp(notifs []*pb.Notification) gnmi.BgpRibs {
+func ParseBgpRibResp(notifs []*pb.Notification) map[gnmi.BgpVrfName]map[gnmi.BgpRibKey]gnmi.BgpRibRoute {
 	ribs := make(map[gnmi.BgpVrfName]map[gnmi.BgpRibKey]gnmi.BgpRibRoute)
 
 	for _, n := range notifs {

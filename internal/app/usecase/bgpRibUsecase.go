@@ -42,7 +42,6 @@ func CollectBgpRib(devices *cue.DeviceList, clientFactory func(cue.Device) ports
 				})
 			}
 			client.Close()
-
 			resultChan <- bgpRib
 			fmt.Println("goroutine written to resultchan")
 		}()
@@ -51,14 +50,16 @@ func CollectBgpRib(devices *cue.DeviceList, clientFactory func(cue.Device) ports
 		wg.Wait()
 		close(resultChan)
 	}()
-	for result := range resultChan {
-		for vrfName, rib := range result {
-			if _, exists := results[vrfName]; !exists {
-				results[vrfName] = make(map[gnmi.BgpRibKey]gnmi.BgpRibRoute)
+	for chanResult := range resultChan {
+		for device, vrf := range chanResult {
+			for vrfName, rib := range vrf {
+				if _, exists := results[device]; !exists {
+					results[device] = make(map[gnmi.BgpVrfName]map[gnmi.BgpRibKey]gnmi.BgpRibRoute)
+				}
+
+				results[device][vrfName] = rib
 			}
-			for key, route := range rib {
-				results[vrfName][key] = route
-			}
+
 		}
 	}
 	return results

@@ -44,9 +44,11 @@ func Execute() {
 	bgpResults := usecase.CollectBgpRib(devices, gnmiClient.NewGNMIClient)
 	fmt.Println("RIB goroutine finished")
 
-	for _, bgpRib := range bgpResults {
-		for _, route := range bgpRib {
-			fmt.Printf("Prefix: %s, \n", route.Prefix)
+	for device, bgpRib := range bgpResults {
+		for _, routes := range bgpRib {
+			for _, route := range routes {
+				fmt.Printf("Device: %s\nPrefix: %v, \n", device, route.Prefix)
+			}
 		}
 	}
 }
