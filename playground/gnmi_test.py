@@ -5,7 +5,8 @@ import json
 # Variables
 host = ('192.168.121.101', '6030')
 
-path = "network-instances/network-instance/afts/ipv4-unicast/ipv4-entry" #routing table
+path = "network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes"
+# path = "network-instances/network-instance/afts/ipv4-unicast/ipv4-entry" #routing table
 # path = "/network-instances/network-instance/name" # vrf list / read/write
 # path = "/network-instances/network-instance/afts/state-synced" # vrf list
 # path = "network-instances" # vrf list / read/write

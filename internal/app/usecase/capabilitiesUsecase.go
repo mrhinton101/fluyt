@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
@@ -32,7 +34,13 @@ func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device)
 		go func() {
 			defer wg.Done()
 			fmt.Printf("starting goroutine: %v", client.GetAddress())
-			caps, err := client.Capabilities()
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			initErr := client.Init(ctx)
+			if initErr != nil {
+				fmt.Println(initErr)
+			}
+			caps, err := client.Capabilities(ctx)
 			if err != nil {
 				logger.SLogger(logger.LogEntry{
 					Level:     slog.LevelError,
@@ -43,6 +51,7 @@ func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device)
 					Target:    client.GetAddress(),
 				})
 			}
+			client.Close()
 
 			result := CapabilitiesResult{
 				Target:    client.GetAddress(),
@@ -53,6 +62,7 @@ func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device)
 			resultChan <- result
 			fmt.Println("goroutine written to resultchan")
 		}()
+
 	}
 	go func() {
 		wg.Wait()
@@ -63,4 +73,5 @@ func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device)
 	}
 
 	return results
+
 }

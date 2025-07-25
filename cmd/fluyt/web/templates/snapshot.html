@@ -1,0 +1,21 @@
+{{ define "content" }}
+<h2>{{ .Title }}</h2>
+
+{{ range $device, $vrfs := .Results }}
+  <h3>Device: {{ $device }}</h3>
+
+  {{ range $vrf, $routes := $vrfs }}
+    <h5>VRF: {{ $vrf }}</h5>
+
+    <ul class="list-group mb-3">
+      {{ range $routes }}
+        <li class="list-group-item">
+          <strong>Prefix:</strong> {{ .Prefix }}<br/>
+          <strong>Origin:</strong> {{ .Origin }}<br/>
+        </li>
+      {{ end }}
+    </ul>
+  {{ end }}
+
+{{ end }}
+{{ end }}
