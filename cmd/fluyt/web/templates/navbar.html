@@ -17,7 +17,7 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button"
              data-bs-toggle="dropdown" aria-expanded="false">
-            Snapshots
+            Operations
           </a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="/api/snapshot">RIB</a></li>
@@ -32,8 +32,8 @@
         </li>
       </ul>
 
-      <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
+      <form class="d-flex" method="GET" action="/search">
+        <input class="form-control me-2" type="search" name="device" placeholder="Device Name" aria-label="Search" />
         <button class="btn btn-outline-success" type="submit">Search</button>
       </form>
     </div>

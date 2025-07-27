@@ -30,7 +30,6 @@ func CollectBgpRib(devices *cue.DeviceList, clientFactory func(cue.Device) ports
 				fmt.Println(initErr)
 			}
 			bgpRib, err := client.GetBgpRibs(ctx)
-			fmt.Printf("Device: %s, bgpRib:%s\n", client.GetAddress(), bgpRib)
 			if err != nil {
 				logger.SLogger(logger.LogEntry{
 					Level:     slog.LevelError,
