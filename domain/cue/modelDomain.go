@@ -23,6 +23,28 @@ type DeviceList struct {
 	Devices []Device
 }
 
+func (d DeviceList) GetByName(name string) (*DeviceList, bool) {
+	for _, device := range d.Devices {
+		if device.Name == name {
+			return &DeviceList{Devices: []Device{device}}, true
+		}
+	}
+	return nil, false
+}
+
+// func (d DeviceList) GetByAddress(address string) *Device {
+// 	for _, device := range d.Devices {
+// 		if device.Address == address {
+// 			return &device
+// 		}
+// 	}
+// 	return nil
+// }
+
+func (d DeviceList) All() *DeviceList {
+	return &DeviceList{Devices: d.Devices}
+}
+
 type DeviceSubsList struct {
 	Devices     []DeviceSubPaths
 	dedupTarget map[string]struct{}

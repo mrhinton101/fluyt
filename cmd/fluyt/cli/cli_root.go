@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func Execute() {
 
 	// Use the devices in the usecase layer
 	results := usecase.CollectCapabilities(devices, gnmiClient.NewGNMIClient)
-	fmt.Println("goroutine finished")
+	fmt.Println("usecase goroutine finished")
 	// Print the results
 	for _, r := range results {
 		fmt.Printf("Target: %s\n", r.Target)
@@ -40,5 +40,15 @@ func Execute() {
 		}
 
 		fmt.Printf("Versions: %v\n\n", r.Versions)
+	}
+	bgpResults := usecase.CollectBgpRib(devices, gnmiClient.NewGNMIClient)
+	fmt.Println("RIB goroutine finished")
+
+	for device, bgpRib := range bgpResults {
+		for _, routes := range bgpRib {
+			for _, route := range routes {
+				fmt.Printf("Device: %s\nPrefix: %v, \n", device, route.Prefix)
+			}
+		}
 	}
 }
