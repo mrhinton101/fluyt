@@ -3,9 +3,11 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/go-cmp/cmp"
 	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/domain/gnmi"
 	"github.com/mrhinton101/fluyt/internal/adapter/gnmiClient"
@@ -20,12 +22,27 @@ type Server struct {
 type TempRibSnap struct {
 	Devices   cue.DeviceList
 	Timestamp string
-	ribs      gnmi.BgpRibs
+	Ribs      gnmi.BgpRibs
 }
 
 type SnapshotPageData struct {
 	Title   string
 	Results gnmi.BgpRibs
+}
+
+type DiffPageData struct {
+	Title   string
+	Results []TempRibSnap
+}
+
+type DiffResultsPageData struct {
+	Title   string
+	Results []DiffLine
+}
+
+type DiffLine struct {
+	Line  string
+	Class string // e.g. "add", "remove", or "neutral"
 }
 
 // func RibHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +62,63 @@ type SnapshotPageData struct {
 // 	renderTemplate(w, "snapshot.html", data)
 // }
 
-func DiffHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: parse from/to and run diff
-	fmt.Fprintln(w, "Diff results here")
+func (s *Server) DiffResultsHandler(w http.ResponseWriter, r *http.Request) {
+
+	penulti := s.TempRibSnaps[len(s.TempRibSnaps)-2]
+
+	ulti := s.TempRibSnaps[len(s.TempRibSnaps)-1]
+	ignoredSuffixes := map[string]bool{
+		"Timestamp":          true,
+		"State.LastModified": true,
+	}
+
+	diff := cmp.Diff(penulti, ulti,
+		cmp.FilterPath(func(p cmp.Path) bool {
+			for suffix := range ignoredSuffixes {
+				if strings.HasSuffix(p.String(), suffix) {
+					return true
+				}
+			}
+			return false
+		}, cmp.Ignore()),
+	)
+	// fmt.Println(diff)
+
+	if diff == "" {
+		http.Error(w, "No differences found between snapshots", http.StatusNotFound)
+		return
+	}
+	var diffLines []DiffLine
+	for _, line := range strings.Split(diff, "\n") {
+		fmt.Println("Processing line:", line)
+		switch {
+		case strings.Contains(line, "192.168.121."):
+			diffLines = append(diffLines, DiffLine{Line: line, Class: "neutral"})
+		case strings.HasPrefix(line, "+"):
+			diffLines = append(diffLines, DiffLine{Line: line, Class: "add"})
+		case strings.HasPrefix(line, "-"):
+			diffLines = append(diffLines, DiffLine{Line: line, Class: "remove"})
+		default:
+			continue
+		}
+	}
+
+	results := diffLines
+	renderTemplate(w, "diffresults.html", DiffResultsPageData{
+		Title:   fmt.Sprint("RIB Diff results for"),
+		Results: results,
+	})
+
+}
+
+func (s *Server) DiffHandler(w http.ResponseWriter, r *http.Request) {
+
+	results := s.TempRibSnaps
+	renderTemplate(w, "diff.html", DiffPageData{
+		Title:   fmt.Sprint("RIB Differ for"),
+		Results: results,
+	})
+
 }
 
 func (s *Server) SnapshotHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +171,7 @@ func (s *Server) AddRibDiff(DeviceList cue.DeviceList, RibSnap gnmi.BgpRibs) {
 	snapshot := TempRibSnap{
 		Devices:   DeviceList,
 		Timestamp: timestamp,
-		ribs:      RibSnap}
+		Ribs:      RibSnap}
 	s.TempRibSnaps = append(s.TempRibSnaps, snapshot)
 	fmt.Println(s.TempRibSnaps)
 	fmt.Println("\n")

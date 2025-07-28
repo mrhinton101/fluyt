@@ -1,0 +1,15 @@
+{{ define "content" }}
+<h2>{{ .Title }}</h2>
+<style>
+    .add { color: green; }
+    .remove { color: red; }
+    .neutral { color: gray; }
+    /* .diff-block { font-family: monospace; white-space: pre; } */
+  </style>
+  
+  <div class="diff-block">
+    {{ range .Results }}
+      <div class="{{ .Class }}">{{ .Line }}</div>
+    {{ end }}
+  </div>
+{{ end }}

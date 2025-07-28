@@ -19,7 +19,8 @@ func StartServer(devices *cue.DeviceList) {
 	r.Get("/", IndexHandler)
 	r.Get("/api/{device}/snapshot", server.SnapshotHandler)
 	r.Get("/search", server.SearchHandler)
-	// r.Get("/api/diff", server.DiffHandler)
+	r.Get("/api/diff", server.DiffHandler)
+	r.Get("/api/diff/results", server.DiffResultsHandler)
 
 	r.Get("/test/{device}", func(w http.ResponseWriter, r *http.Request) {
 		target := chi.URLParam(r, "device")
