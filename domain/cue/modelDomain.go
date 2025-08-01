@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 )
 
@@ -12,11 +13,11 @@ type DeviceSubPaths struct {
 	Device
 	Paths []string
 }
-
 type Device struct {
 	Name    string
 	Address string
 	Port    string // optional
+	Config  model.DeviceConfig
 }
 
 type DeviceList struct {

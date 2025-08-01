@@ -16,7 +16,7 @@ import "net"
     "env": string 
     }
     description?: string
-    config?: [...string]
+    config_file?: string
     pushmode?: "GNMI" | "Terraform" | "Pulumi"
     capabilities?: bool
     tel_paths: [for x, y in #telemetry_paths 

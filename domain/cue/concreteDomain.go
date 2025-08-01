@@ -1,13 +1,18 @@
 package cue
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 
 	"cuelang.org/go/cue"
+	"gopkg.in/yaml.v3"
 
+	"github.com/mrhinton101/fluyt/domain/avd"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
+	"github.com/mrhinton101/fluyt/internal/app/core/utils"
 )
 
 type ConcreteInv struct {
@@ -19,7 +24,15 @@ func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
-		return nil, fmt.Errorf("cannot iterate inventory: %w", err)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "load inventory",
+			Msg:       fmt.Sprintln("failed to iterate over inventory"),
+			Target:    "localhost",
+		})
+		return nil, err
 	}
 
 	for iter.Next() {
@@ -34,6 +47,26 @@ func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
 		}
 		portVal := deviceVal.LookupPath(cue.ParsePath("port"))
 		portStr, _ := portVal.String() // optional
+
+		configPathVal := deviceVal.LookupPath(cue.ParsePath("config_file"))
+		configPathStr, _ := configPathVal.String() // optional
+
+		reader := utils.LocalReader{}
+
+		configStruct, err := LoadAvdDeviceConfig(reader, configPathStr)
+		if err != nil {
+			logger.SLogger(logger.LogEntry{
+				Level:     slog.LevelError,
+				Err:       err,
+				Component: "Cue",
+				Action:    "Read local File",
+				Msg:       fmt.Sprintf("error reading from path %s", configPathStr),
+				Target:    configPathStr,
+			})
+			return nil, err
+		}
+
+		fmt.Println(configStruct)
 
 		list.Add(Device{
 			Name:    deviceName,
@@ -116,4 +149,26 @@ func logError(field, device string, err error) {
 		Msg:       fmt.Sprintf("Device %s - %s error: %v", device, field, err),
 		Target:    device,
 	})
+}
+
+func LoadAvdDeviceConfig(reader utils.Reader, path string) (*avd.AvdDeviceConfig, error) {
+	data, err := reader.Read(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfg avd.AvdDeviceConfig
+	switch filepath.Ext(path) {
+	case ".json":
+		err = json.Unmarshal(data, &cfg)
+	case ".yaml", ".yml":
+		err = yaml.Unmarshal(data, &cfg)
+	default:
+		return nil, fmt.Errorf("unsupported file format: %s", path)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }

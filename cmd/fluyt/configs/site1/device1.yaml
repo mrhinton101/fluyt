@@ -1,0 +1,8 @@
+router_bgp:
+  as: 65001
+  router_id: 100.110.224.21
+  neighbors:
+    100.110.227.163:
+      peer_group: LEAF
+      description: blf-cny2-001-b
+      remote_as: 65002
