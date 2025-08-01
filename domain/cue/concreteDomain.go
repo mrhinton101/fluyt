@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/mrhinton101/fluyt/domain/avd"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/core/utils"
 )
@@ -19,8 +20,8 @@ type ConcreteInv struct {
 	Inventory cue.Value
 }
 
-func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
-	list := NewDeviceList()
+func (inv *ConcreteInv) LoadDevices() (*model.DeviceList, error) {
+	list := model.NewDeviceList()
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
@@ -68,7 +69,7 @@ func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
 
 		fmt.Println(configStruct)
 
-		list.Add(Device{
+		list.Add(model.Device{
 			Name:    deviceName,
 			Address: ipStr,
 			Port:    portStr,
@@ -78,8 +79,8 @@ func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
 	return list, nil
 }
 
-func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
-	list := NewDeviceSubsList()
+func (inv *ConcreteInv) LoadSubs() (*model.DeviceSubsList, error) {
+	list := model.NewDeviceSubsList()
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
@@ -97,7 +98,7 @@ func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
 			continue
 		}
 		// Create device entry
-		device := Device{
+		device := model.Device{
 			Name:    deviceName,
 			Address: ipStr,
 		}
@@ -109,7 +110,7 @@ func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
 		}
 
 		paths := extractTelemetryPaths(telPaths, deviceName)
-		list.Add(DeviceSubPaths{
+		list.Add(model.DeviceSubPaths{
 			Device: device,
 			Paths:  paths,
 		})

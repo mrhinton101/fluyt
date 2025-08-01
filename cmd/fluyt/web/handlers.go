@@ -8,19 +8,19 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/go-cmp/cmp"
-	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/domain/gnmi"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/adapter/gnmiClient"
 	"github.com/mrhinton101/fluyt/internal/app/usecase"
 )
 
 type Server struct {
-	Devices      cue.DeviceList
+	Devices      model.DeviceList
 	TempRibSnaps []TempRibSnap
 }
 
 type TempRibSnap struct {
-	Devices   cue.DeviceList
+	Devices   model.DeviceList
 	Timestamp string
 	Ribs      gnmi.BgpRibs
 }
@@ -125,7 +125,7 @@ func (s *Server) SnapshotHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Target from chi.URLParam: %q\n", chi.URLParam(r, "device"))
 	target := chi.URLParam(r, "device")
 
-	var devices *cue.DeviceList
+	var devices *model.DeviceList
 	fmt.Printf("Target device: %s\n", target)
 	switch target {
 	case "all":
@@ -141,7 +141,7 @@ func (s *Server) SnapshotHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-	var snapshotDevices cue.DeviceList
+	var snapshotDevices model.DeviceList
 	snapshotDevices = *devices
 
 	results := usecase.CollectBgpRib(devices, gnmiClient.NewGNMIClient)
@@ -164,7 +164,7 @@ func (s *Server) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/api/%s/snapshot", device), http.StatusSeeOther)
 }
 
-func (s *Server) AddRibDiff(DeviceList cue.DeviceList, RibSnap gnmi.BgpRibs) {
+func (s *Server) AddRibDiff(DeviceList model.DeviceList, RibSnap gnmi.BgpRibs) {
 	// Placeholder for adding RIB diff logic
 	fmt.Println("Adding RIB diff logic...")
 	timestamp := time.Now().Format(time.RFC3339)

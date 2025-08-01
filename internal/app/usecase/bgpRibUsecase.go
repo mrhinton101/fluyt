@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/domain/gnmi"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
 )
 
-func CollectBgpRib(devices *cue.DeviceList, clientFactory func(cue.Device) ports.GNMIClient) gnmi.BgpRibs {
+func CollectBgpRib(devices *model.DeviceList, clientFactory func(model.Device) ports.GNMIClient) gnmi.BgpRibs {
 	results := gnmi.BgpRibs{}
 	resultChan := make(chan gnmi.BgpRibs)
 	var wg sync.WaitGroup

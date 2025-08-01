@@ -8,8 +8,8 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/mrhinton101/fluyt/domain/cue"
 	"github.com/mrhinton101/fluyt/domain/gnmi"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
 	pb "github.com/openconfig/gnmi/proto/gnmi"
@@ -29,7 +29,7 @@ type GNMICapabilityResponse struct {
 	Response pb.CapabilityResponse
 }
 
-func NewGNMIClient(device cue.Device) ports.GNMIClient {
+func NewGNMIClient(device model.Device) ports.GNMIClient {
 	return &GNMIClientImpl{
 		Name:    device.Name,
 		Address: fmt.Sprintf("%s:6030", device.Address),

@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mrhinton101/fluyt/domain/cue"
+	"github.com/mrhinton101/fluyt/domain/model"
 )
 
-func StartServer(devices *cue.DeviceList) {
+func StartServer(devices *model.DeviceList) {
 	server := Server{Devices: *devices}
 
 	fmt.Println("Registering routes...")

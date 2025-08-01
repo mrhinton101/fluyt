@@ -10,6 +10,7 @@ import (
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/encoding/yaml"
 	cueInternal "github.com/mrhinton101/fluyt/domain/cue"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/core/utils"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
@@ -21,13 +22,13 @@ func NewCueHandler() ports.CueHandler {
 	return &CueHandler{}
 }
 
-func (h *CueHandler) LoadDeviceSubs(schemaDir, invFile string) (*cueInternal.DeviceSubsList, error) {
+func (h *CueHandler) LoadDeviceSubs(schemaDir, invFile string) (*model.DeviceSubsList, error) {
 	ctx, schemaVals := h.loadSchemaDir(schemaDir)
 	concrete := h.loadInventoryFromFile(ctx, schemaVals, invFile)
 	return concrete.LoadSubs()
 }
 
-func (h *CueHandler) LoadDeviceList(schemaDir, invFile string) (*cueInternal.DeviceList, error) {
+func (h *CueHandler) LoadDeviceList(schemaDir, invFile string) (*model.DeviceList, error) {
 	ctx, schemaVals := h.loadSchemaDir(schemaDir)
 	concrete := h.loadInventoryFromFile(ctx, schemaVals, invFile)
 	return concrete.LoadDevices()
