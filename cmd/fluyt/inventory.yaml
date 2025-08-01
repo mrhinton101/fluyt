@@ -8,6 +8,7 @@ inventory:
       - aft
       - aft
     config_file: "./configs/site1/device1.yaml"
+    config_format: avd
   device2:
     ip: "192.168.121.102"
     tags:
@@ -17,3 +18,4 @@ inventory:
       - aft
       - aft
     config_file: "./configs/site2/device2.yaml"
+    config_format: AVD

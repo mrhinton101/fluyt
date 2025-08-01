@@ -112,24 +112,13 @@ func (c *GNMIClientImpl) Capabilities(ctx context.Context) (map[string]interface
 }
 
 func (c *GNMIClientImpl) GetBgpRibs(ctx context.Context) (gnmi.BgpRibs, error) {
-
-	// create a GetRequest
-	getReq, err := api.NewGetRequest(
-		api.Path("network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes"),
-		api.Encoding("json_ietf"))
+	parsedRib, err := getParsedPath(ctx, c,
+		"network-instances/network-instance/protocols/protocol/bgp/rib/afi-safis/afi-safi/ipv4-unicast/loc-rib/routes",
+		ParseBgpRibResp,
+	)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
-	// fmt.Println(prototext.Format(getReq))
-
-	// send the created gNMI GetRequest to the created target
-	getResp, err := c.tg.Get(ctx, getReq)
-	if err != nil {
-		log.Fatal(err)
-	}
-	val := getResp.GetNotification()
-	parsedRib := ParseBgpRibResp(val)
 	if len(parsedRib) == 0 {
 		logger.SLogger(logger.LogEntry{
 			Level:     slog.LevelError,
@@ -147,6 +136,28 @@ func (c *GNMIClientImpl) GetBgpRibs(ctx context.Context) (gnmi.BgpRibs, error) {
 
 func (c *GNMIClientImpl) GetAddress() string {
 	return c.Address
+}
+
+func getParsedPath[T any](
+	ctx context.Context,
+	client *GNMIClientImpl,
+	path string,
+	parser func([]*pb.Notification) T,
+) (T, error) {
+
+	var zero T
+
+	getReq, err := api.NewGetRequest(api.Path(path), api.Encoding("json_ietf"))
+	if err != nil {
+		return zero, err
+	}
+
+	getResp, err := client.tg.Get(ctx, getReq)
+	if err != nil {
+		return zero, err
+	}
+
+	return parser(getResp.GetNotification()), nil
 }
 
 func (c *GNMIClientImpl) Close() {
@@ -213,7 +224,7 @@ func extractVRF(path *pb.Path) gnmi.BgpVrfName {
 	return gnmi.BgpVrfName{Name: ""}
 }
 
-func ParseBgpRibResp(notifs []*pb.Notification) map[gnmi.BgpVrfName]map[gnmi.BgpRibKey]gnmi.BgpRibRoute {
+func ParseBgpRibResp(notifs []*pb.Notification) gnmi.BgpRib {
 	ribs := make(map[gnmi.BgpVrfName]map[gnmi.BgpRibKey]gnmi.BgpRibRoute)
 
 	for _, n := range notifs {

@@ -10,6 +10,3 @@ type AvdDeviceConfig struct {
 	// Overlay
 	// Platform
 }
-
-
-func 

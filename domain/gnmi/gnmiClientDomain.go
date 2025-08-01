@@ -30,7 +30,9 @@ type BgpVrfName struct {
 
 type Device string
 
-type BgpRibs map[Device]map[BgpVrfName]map[BgpRibKey]BgpRibRoute
+type BgpRib map[BgpVrfName]map[BgpRibKey]BgpRibRoute
+
+type BgpRibs map[Device]BgpRib
 
 type GnmiBgpRibRoutes struct {
 	Routes []BgpRibRoute `json:"openconfig-network-instance:route"`

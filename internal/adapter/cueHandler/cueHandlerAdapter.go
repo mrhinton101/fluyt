@@ -94,8 +94,8 @@ func (h *CueHandler) loadInventoryFromDir(ctx *cue.Context, schemaVals []cue.Val
 	}
 	for device, path := range yamlfiles {
 		yamlVal := h.loadYaml(ctx, path)
-		fmt.Printf("loaded %s\n", path)
-		fmt.Printf("device: %s\n\n\n", device)
+		// fmt.Printf("loaded %s\n", path)
+		// fmt.Printf("device: %s\n\n\n", device)
 
 		invMap = invMap.FillPath(
 			cue.ParsePath(fmt.Sprintf("inventory.%s", device)),

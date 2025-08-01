@@ -8,44 +8,6 @@ import (
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 )
 
-// type Device struct {
-// 	Name  string
-// 	IP    string
-// 	Make  string
-// 	Model string
-// 	// Switching
-// 	// Routing Routing
-// 	// Interfaces map[string]Interface
-
-// }
-
-type DeviceConfigRouting struct {
-	Bgp BgpProc
-	// OSPF DeviceConfigOSPF
-}
-
-type DeviceConfig struct {
-	// Physical
-	// Switching
-	Routing DeviceConfigRouting
-	// Overlay
-	// Platform
-}
-
-type Vlans struct {
-}
-type BgpNeighbor struct {
-	PeerGroup   string `yaml:"peer_group"`
-	Description string `yaml:"description"`
-	RemoteAs    uint32 `yaml:"remote_as"`
-}
-
-type BgpProc struct {
-	AS        uint32                 `yaml:"as"`
-	RouterID  string                 `yaml:"router_id"`
-	Neighbors map[string]BgpNeighbor `yaml:"neighbors"`
-}
-
 type DeviceSubPaths struct {
 	Device
 	Paths []string
@@ -70,14 +32,14 @@ func (d DeviceList) GetByName(name string) (*DeviceList, bool) {
 	return nil, false
 }
 
-// func (d DeviceList) GetByAddress(address string) *Device {
-// 	for _, device := range d.Devices {
-// 		if device.Address == address {
-// 			return &device
-// 		}
-// 	}
-// 	return nil
-// }
+func (d DeviceList) GetByAddress(address string) *Device {
+	for _, device := range d.Devices {
+		if device.Address == address {
+			return &device
+		}
+	}
+	return nil
+}
 
 func (d DeviceList) All() *DeviceList {
 	return &DeviceList{Devices: d.Devices}

@@ -1,19 +1,15 @@
 package cue
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"path/filepath"
+	"strings"
 
 	"cuelang.org/go/cue"
-	"gopkg.in/yaml.v3"
-
 	"github.com/mrhinton101/fluyt/domain/avd"
 	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
-	"github.com/mrhinton101/fluyt/internal/app/core/utils"
 )
 
 type ConcreteInv struct {
@@ -22,6 +18,7 @@ type ConcreteInv struct {
 
 func (inv *ConcreteInv) LoadDevices() (*model.DeviceList, error) {
 	list := model.NewDeviceList()
+	var deviceConfig model.DeviceConfig
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
@@ -52,27 +49,46 @@ func (inv *ConcreteInv) LoadDevices() (*model.DeviceList, error) {
 		configPathVal := deviceVal.LookupPath(cue.ParsePath("config_file"))
 		configPathStr, _ := configPathVal.String() // optional
 
-		reader := utils.LocalReader{}
+		configFmtVal := deviceVal.LookupPath(cue.ParsePath("config_format"))
+		configFmtStr, _ := configFmtVal.String() // optional
+		// fmt.Println(configFmtVal.String())
 
-		configStruct, err := LoadAvdDeviceConfig(reader, configPathStr)
-		if err != nil {
+		lowerCfgFmt := strings.ToLower(configFmtStr)
+
+		switch lowerCfgFmt {
+		case "avd":
+			deviceConfig, err = avd.AvdToModel(configPathStr)
+			if err != nil {
+				logger.SLogger(logger.LogEntry{
+					Level:     slog.LevelError,
+					Err:       err,
+					Component: "Cue",
+					Action:    "Read local File",
+					Msg:       fmt.Sprintf("error reading from path %s", configPathStr),
+					Target:    configPathStr,
+				})
+				return nil, err
+			}
+		default:
+			err := fmt.Errorf("unsupported config file format: %s", configFmtStr)
 			logger.SLogger(logger.LogEntry{
 				Level:     slog.LevelError,
 				Err:       err,
 				Component: "Cue",
-				Action:    "Read local File",
-				Msg:       fmt.Sprintf("error reading from path %s", configPathStr),
+				Action:    "determine config file format",
+				Msg:       fmt.Sprintf("currently only 'AVD' is supported config format. You provided  %s", configFmtStr),
 				Target:    configPathStr,
 			})
 			return nil, err
 		}
 
-		fmt.Println(configStruct)
+		// fmt.Println(deviceConfig)
 
 		list.Add(model.Device{
 			Name:    deviceName,
 			Address: ipStr,
 			Port:    portStr,
+			Config:  deviceConfig,
 		})
 	}
 
@@ -150,26 +166,4 @@ func logError(field, device string, err error) {
 		Msg:       fmt.Sprintf("Device %s - %s error: %v", device, field, err),
 		Target:    device,
 	})
-}
-
-func LoadAvdDeviceConfig(reader utils.Reader, path string) (*avd.AvdDeviceConfig, error) {
-	data, err := reader.Read(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg avd.AvdDeviceConfig
-	switch filepath.Ext(path) {
-	case ".json":
-		err = json.Unmarshal(data, &cfg)
-	case ".yaml", ".yml":
-		err = yaml.Unmarshal(data, &cfg)
-	default:
-		return nil, fmt.Errorf("unsupported file format: %s", path)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
