@@ -13,7 +13,7 @@ import (
 
 var (
 	schemaDir = "../../schema/"
-	invFile   = "./inventory.yml"
+	invFile   = "./inventory.yaml"
 )
 
 func main() {

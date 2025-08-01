@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"cuelang.org/go/cue"
-
+	"github.com/mrhinton101/fluyt/domain/avd"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 )
 
@@ -14,12 +16,21 @@ type ConcreteInv struct {
 	Inventory cue.Value
 }
 
-func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
-	list := NewDeviceList()
+func (inv *ConcreteInv) LoadDevices() (*model.DeviceList, error) {
+	list := model.NewDeviceList()
+	var deviceConfig model.DeviceConfig
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
-		return nil, fmt.Errorf("cannot iterate inventory: %w", err)
+		logger.SLogger(logger.LogEntry{
+			Level:     slog.LevelError,
+			Err:       err,
+			Component: "Cue",
+			Action:    "load inventory",
+			Msg:       fmt.Sprintln("failed to iterate over inventory"),
+			Target:    "localhost",
+		})
+		return nil, err
 	}
 
 	for iter.Next() {
@@ -35,18 +46,57 @@ func (inv *ConcreteInv) LoadDevices() (*DeviceList, error) {
 		portVal := deviceVal.LookupPath(cue.ParsePath("port"))
 		portStr, _ := portVal.String() // optional
 
-		list.Add(Device{
+		configPathVal := deviceVal.LookupPath(cue.ParsePath("config_file"))
+		configPathStr, _ := configPathVal.String() // optional
+
+		configFmtVal := deviceVal.LookupPath(cue.ParsePath("config_format"))
+		configFmtStr, _ := configFmtVal.String() // optional
+		// fmt.Println(configFmtVal.String())
+
+		lowerCfgFmt := strings.ToLower(configFmtStr)
+
+		switch lowerCfgFmt {
+		case "avd":
+			deviceConfig, err = avd.AvdToModel(configPathStr)
+			if err != nil {
+				logger.SLogger(logger.LogEntry{
+					Level:     slog.LevelError,
+					Err:       err,
+					Component: "Cue",
+					Action:    "Read local File",
+					Msg:       fmt.Sprintf("error reading from path %s", configPathStr),
+					Target:    configPathStr,
+				})
+				return nil, err
+			}
+		default:
+			err := fmt.Errorf("unsupported config file format: %s", configFmtStr)
+			logger.SLogger(logger.LogEntry{
+				Level:     slog.LevelError,
+				Err:       err,
+				Component: "Cue",
+				Action:    "determine config file format",
+				Msg:       fmt.Sprintf("currently only 'AVD' is supported config format. You provided  %s", configFmtStr),
+				Target:    configPathStr,
+			})
+			return nil, err
+		}
+
+		// fmt.Println(deviceConfig)
+
+		list.Add(model.Device{
 			Name:    deviceName,
 			Address: ipStr,
 			Port:    portStr,
+			Config:  deviceConfig,
 		})
 	}
 
 	return list, nil
 }
 
-func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
-	list := NewDeviceSubsList()
+func (inv *ConcreteInv) LoadSubs() (*model.DeviceSubsList, error) {
+	list := model.NewDeviceSubsList()
 
 	iter, err := inv.Inventory.Fields()
 	if err != nil {
@@ -64,7 +114,7 @@ func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
 			continue
 		}
 		// Create device entry
-		device := Device{
+		device := model.Device{
 			Name:    deviceName,
 			Address: ipStr,
 		}
@@ -76,7 +126,7 @@ func (inv *ConcreteInv) LoadSubs() (*DeviceSubsList, error) {
 		}
 
 		paths := extractTelemetryPaths(telPaths, deviceName)
-		list.Add(DeviceSubPaths{
+		list.Add(model.DeviceSubPaths{
 			Device: device,
 			Paths:  paths,
 		})

@@ -1,4 +1,4 @@
-package cue
+package model
 
 import (
 	"errors"
@@ -12,11 +12,11 @@ type DeviceSubPaths struct {
 	Device
 	Paths []string
 }
-
 type Device struct {
 	Name    string
 	Address string
 	Port    string // optional
+	Config  DeviceConfig
 }
 
 type DeviceList struct {
@@ -32,14 +32,14 @@ func (d DeviceList) GetByName(name string) (*DeviceList, bool) {
 	return nil, false
 }
 
-// func (d DeviceList) GetByAddress(address string) *Device {
-// 	for _, device := range d.Devices {
-// 		if device.Address == address {
-// 			return &device
-// 		}
-// 	}
-// 	return nil
-// }
+func (d DeviceList) GetByAddress(address string) *Device {
+	for _, device := range d.Devices {
+		if device.Address == address {
+			return &device
+		}
+	}
+	return nil
+}
 
 func (d DeviceList) All() *DeviceList {
 	return &DeviceList{Devices: d.Devices}

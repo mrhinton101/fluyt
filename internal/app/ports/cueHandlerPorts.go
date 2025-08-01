@@ -1,8 +1,8 @@
 package ports
 
-import "github.com/mrhinton101/fluyt/domain/cue"
+import "github.com/mrhinton101/fluyt/domain/model"
 
 type CueHandler interface {
-	LoadDeviceSubs(schemaDir, invFile string) (*cue.DeviceSubsList, error)
-	LoadDeviceList(schemaDir, invFile string) (*cue.DeviceList, error)
+	LoadDeviceSubs(schemaDir, invFile string) (*model.DeviceSubsList, error)
+	LoadDeviceList(schemaDir, invFile string) (*model.DeviceList, error)
 }

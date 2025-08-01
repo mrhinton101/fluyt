@@ -6,6 +6,7 @@ import "net"
 
 
 
+
 //device entry schema
 #device: {
     name: string
@@ -16,7 +17,8 @@ import "net"
     "env": string 
     }
     description?: string
-    config?: [...string]
+    config_file?: string
+    config_format?: string
     pushmode?: "GNMI" | "Terraform" | "Pulumi"
     capabilities?: bool
     tel_paths: [for x, y in #telemetry_paths 

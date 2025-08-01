@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mrhinton101/fluyt/domain/cue"
+	"github.com/mrhinton101/fluyt/domain/model"
 	"github.com/mrhinton101/fluyt/internal/app/core/logger"
 	"github.com/mrhinton101/fluyt/internal/app/ports"
 )
@@ -23,7 +23,7 @@ type CapabilitiesResult struct {
 	Versions  string
 }
 
-func CollectCapabilities(devices *cue.DeviceList, clientFactory func(cue.Device) ports.GNMIClient) []CapabilitiesResult {
+func CollectCapabilities(devices *model.DeviceList, clientFactory func(model.Device) ports.GNMIClient) []CapabilitiesResult {
 	results := []CapabilitiesResult{}
 	resultChan := make(chan CapabilitiesResult)
 	var wg sync.WaitGroup
